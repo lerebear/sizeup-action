@@ -1,0 +1,96 @@
+# SizeUp Action
+
+This repository contains a GitHub Action that wraps the [`sizeup` library](https://github.com/lerebear/sizeup) in order to provide a way to estimate the reviewability of a pull request as it goes through its lifecycle on GitHub.
+
+## Usage
+
+See [`action.yml`](./action.yml)
+
+```yaml
+- name: Estimate pull request reviewability
+  uses: lerebear/sizeup-action@main
+  id: sizeup-action
+  with:
+    # A GitHub API token capable of reading pull requests on the repository
+    # in which this workflow is being used.
+    #
+    # A good default value is the default `GITHUB_TOKEN` secret used below.
+    token: "${{ secrets.GITHUB_TOKEN }}"
+
+    # Path to a YAML configuration file for this action that is stored in this
+    # repository. To use this, you must add a workflow step prior to this one
+    # that uses `actions/checkout` to checkout a local copy of the repository
+    # so that we can resolve the path to the config file.
+    #
+    # To learn about which configuration values are supported, see:
+    # https://github.com/lerebear/sizeup-action#configuration
+    #
+    # Default: "" (which instructs the Action to use the default configuration)
+    configuration-file: ""
+```
+
+## Configuration
+
+This Action can be configured by specifying the `configuration-file` input. The value of that input should be the path to a YAML file that contains configuration for this Action and the underlying `sizeup` library.
+
+An example configuration file looks like this:
+
+```yaml
+# Whether or not to add a label to each pull request to indicate its assessed category
+applyCategoryLabels: true
+
+# The prefix to add to each category label that we apply.
+categoryLabelPrefix: "sizeup/"
+
+# Whether or not to add a comment to each assessed pull request that exceeds
+# the recommended score threshold
+addCommentWhenScoreThresholdHasBeenExceeded: true
+
+# List of users for whom we should run this workflow
+optIns:
+  - lerebear
+  - glortho
+
+# Configuration for how to evaluate pull requests.
+# This is of the same format that `sizeup` accepts directly.
+sizeup:
+  categories:
+    - name: extra small
+      lte: 10
+      label:
+        name: xs
+        color: 3cbf00
+    - name: small
+      lte: 30
+      label:
+        name: s
+        color: 5d9801
+    - name: medium
+      lte: 100
+      threshold: true
+      label:
+        name: m
+        color: 7f7203
+    - name: large
+      lte: 500
+      label:
+        name: l
+        color: a14c05
+    - name: extra large
+      label:
+        name: sl
+        color: c32607
+  ignoredFilePatterns:
+    - CODEOWNERS
+    - SERVICEOWNERS
+  testFilePatterns:
+    - "*_test.rb"
+  scoring:
+    formula: "- - + additions deletions comments whitespace"
+```
+
+The default configuration that is used when no configuration file is provided can be found in [`src/config/default.yaml`](./src/config/default.yaml).
+
+The full specification for the configuration file is provide by the JSON schema at [`src/config/schema.json`](./src/config/schema/json).
+
+For details on what configuration can be provided under the `sizeup` key, please see the [`sizeup` library's configuration guide](https://github.com/lerebear/sizeup#configuration).

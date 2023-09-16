@@ -1,0 +1,64 @@
+# Whether or not to add a label to each pull request to indicate its assessed category
+applyCategoryLabels: true
+
+# The prefix to add to each category label that we apply.
+categoryLabelPrefix: "sizeup/"
+
+# Whether or not to add a comment to each assessed pull request that exceeds
+# the configured score threshold.
+addCommentWhenScoreThresholdHasBeenExceeded: true
+
+# The template for the comment that should be added to each pull request that
+# exceeds the score threshold. Any of the following variables can be included
+# in the template with surrounding curly braces (e.g. {{author}}) in order to
+# interpolate a computed value into the comment:
+#
+#   - author
+#   - threshold
+#   - score
+#   - category
+scoreThresholdExceededCommentTemplate: |
+  👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
+
+  [Research](https://www.cabird.com/static/93aba3256c80506d3948983db34d3ba3/rigby2013convergent.pdf) has shown that this makes it harder for reviewers to provide quality feedback.
+
+  We recommend that you reduce the size of this PR by separating commits into stacked PRs.
+
+# Configuration for how to evaluate pull requests.
+# This is of the same format that `sizeup` accepts directly.
+sizeup:
+  categories:
+    - name: extra small
+      lte: 10
+      label:
+        name: xs
+        description: Should be very easy to review
+        color: 3cbf00
+    - name: small
+      lte: 30
+      label:
+        name: s
+        description: Should be easy to review
+        color: 5d9801
+    - name: medium
+      lte: 100
+      threshold: true
+      label:
+        name: m
+        description: Should be of average difficulty to review
+        color: 7f7203
+    - name: large
+      lte: 500
+      label:
+        name: l
+        description: May be difficult to review
+        color: a14c05
+    - name: extra large
+      label:
+        name: xl
+        description: May be very difficult to review
+        color: c32607
+  ignoredFilePatterns:
+    - CODEOWNERS
+  scoring:
+    formula: "- - + additions deletions comments whitespace"

@@ -1,0 +1,35 @@
+categories:
+  - name: extra small
+    lte: 10
+    label:
+      name: xs
+      description: Should be very easy to review
+      color: 3cbf00
+  - name: small
+    lte: 30
+    label:
+      name: s
+      description: Should be easy to review
+      color: 5d9801
+  - name: medium
+    lte: 100
+    threshold: true
+    label:
+      name: m
+      description: Should be of average difficulty to review
+      color: 7f7203
+  - name: large
+    lte: 500
+    label:
+      name: l
+      description: May be hard to review
+      color: a14c05
+  - name: extra large
+    label:
+      name: xl
+      description: May be very hard to review
+      color: c32607
+ignoredFilePatterns:
+  - CODEOWNERS
+scoring:
+  formula: "- - + additions deletions comments whitespace"

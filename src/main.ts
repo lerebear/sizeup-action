@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
+import * as github from '@actions/github'
+import { PullRequest } from '@octokit/webhooks-types' // eslint-disable-line import/no-unresolved
+import SizeUp from 'sizeup'
 
 /**
  * The main function for the action.
@@ -7,20 +9,44 @@ import { wait } from './wait'
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    if (github.context.eventName !== 'pull_request') {
+      core.info(JSON.stringify(github))
+      core.info(JSON.stringify(github.context))
+      core.setFailed(
+        "This action is only supported on the 'pull_request' event, " +
+          `but it was triggered for '${github.context.eventName}'`
+      )
+      return
+    }
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    const config: string = core.getInput('configuration-file')
+    if (config) {
+      core.info(`Reading configuration from ${config}`)
+    } else {
+      core.info('Using default configuration')
+    }
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    const pullRequest = github.context.payload as PullRequest
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    const [_scheme, _blank, _domain, owner, repo, _path, number] = // eslint-disable-line @typescript-eslint/no-unused-vars
+      pullRequest.url.split('/')
+
+    const octokit = github.getOctokit(core.getInput('token'))
+    const diff = (
+      await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: Number.parseInt(number, 10),
+        mediaType: { format: 'diff' }
+      })
+    ).data as unknown as string
+
+    const score = SizeUp.evaluate(diff, config)
+
+    core.info(`Computed score:\n${score.toString()}`)
+    core.setOutput('score', score.value)
+    core.setOutput('category', score.category)
   } catch (error) {
-    // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
   }
 }

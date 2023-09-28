@@ -1,19 +1,24 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'SizeUp Action'
+description: 'Estimate how easy a pull request will be to review'
+author: 'Lérè Williams'
 
-# Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  token:
+    description: 'GitHub API token with read permissions for pull requests in this repository.'
     required: true
-    default: '1000'
+  configuration-file:
+    description: 'Optional path to a YAML configuration file. This will be forwarded to sizeup.'
 
-# Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  score:
+    description: 'The numeric score that the pull request received.'
+  category:
+    description: 'The descriptive score category that the pull request was assigned.'
 
 runs:
   using: node20
   main: dist/index.js
+
+branding:
+  icon: 'git-pull-request'
+  color: 'green'

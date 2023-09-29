@@ -29,9 +29,9 @@ export async function run(): Promise<void> {
     core.debug(`github.context: ${JSON.stringify(github.context)}`)
     const pullRequest = github.context.payload.pull_request as PullRequest
 
-    const [_scheme, _blank, _domain, owner, repo, _path, numberString] = // eslint-disable-line @typescript-eslint/no-unused-vars
+    // Parses a URL that looks like: https://api.github.com/repos/lerebear/sizeup/pulls/1
+    const [_scheme, _blank, _domain, _route, owner, repo, _subRoute, number] = // eslint-disable-line @typescript-eslint/no-unused-vars
       pullRequest.url.split('/')
-    const number = Number.parseInt(numberString, 10)
 
     core.debug(`pull request: ${owner}/${repo}#${number}`)
     const octokit = github.getOctokit(core.getInput('token'))
@@ -39,7 +39,7 @@ export async function run(): Promise<void> {
       await octokit.rest.pulls.get({
         owner,
         repo,
-        pull_number: number,
+        pull_number: Number.parseInt(number, 10),
         mediaType: { format: 'diff' }
       })
     ).data as unknown as string

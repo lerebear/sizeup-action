@@ -27,7 +27,7 @@ export async function run(): Promise<void> {
     }
 
     core.debug(`github.context: ${JSON.stringify(github.context)}`)
-    const pullRequest = github.context.payload as PullRequest
+    const pullRequest = github.context.payload.pull_request as PullRequest
 
     const [_scheme, _blank, _domain, owner, repo, _path, numberString] = // eslint-disable-line @typescript-eslint/no-unused-vars
       pullRequest.url.split('/')

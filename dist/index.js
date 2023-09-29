@@ -10436,7 +10436,7 @@ async function run() {
             core.info('Using default sizeup configuration');
         }
         core.debug(`github.context: ${JSON.stringify(github.context)}`);
-        const pullRequest = github.context.payload;
+        const pullRequest = github.context.payload.pull_request;
         const [_scheme, _blank, _domain, owner, repo, _path, numberString] = // eslint-disable-line @typescript-eslint/no-unused-vars
          pullRequest.url.split('/');
         const number = Number.parseInt(numberString, 10);

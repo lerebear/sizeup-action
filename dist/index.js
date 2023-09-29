@@ -6719,6 +6719,204 @@ exports.DefaultConfiguration = {
 
 /***/ }),
 
+/***/ 6085:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+/**
+ * Represents an attribute of a changeset to which we assign a numerical score
+ * that can figure in the formula we use to evaluate how difficult a changeset
+ * will beto review.
+ */
+class Feature {
+    constructor(changeset) {
+        this.changeset = changeset;
+    }
+    /**
+     * @returns the name of this feature that can be used as a variable in scoring
+     *   formulas
+     */
+    static variableName() {
+        return this.name.replace(/([a-z])([A-Z])/, '$1-$2').toLowerCase();
+    }
+}
+exports["default"] = Feature;
+
+
+/***/ }),
+
+/***/ 590:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const feature_1 = __nccwpck_require__(6085);
+class Additions extends feature_1.default {
+    evaluate() {
+        return this.changeset.files.reduce((sum, f) => sum + f.additions, 0);
+    }
+}
+exports["default"] = Additions;
+
+
+/***/ }),
+
+/***/ 5885:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const feature_1 = __nccwpck_require__(6085);
+class Comments extends feature_1.default {
+    evaluate() {
+        return this.changeset.files.reduce((sum, file) => sum + this.countCommentLines(file), 0);
+    }
+    countCommentLines(file) {
+        if (!file.language) {
+            return 0;
+        }
+        let sum = 0;
+        for (const chunk of file.chunks) {
+            let blockCommentLines = 0;
+            for (const change of chunk.changes) {
+                if (["del", "normal"].includes(change.type)) {
+                    continue;
+                }
+                const line = change.content.substring(1).trimStart();
+                if (line.startsWith(file.language.lineCommentStyle.start)) {
+                    sum++;
+                    blockCommentLines = 0;
+                }
+                else if (file.language.blockCommentStyle && line.startsWith(file.language.blockCommentStyle.start) && line.endsWith(file.language.blockCommentStyle.end)) {
+                    sum++;
+                    blockCommentLines = 0;
+                }
+                else if (file.language.blockCommentStyle && line.startsWith(file.language.blockCommentStyle.start)) {
+                    blockCommentLines++;
+                }
+                else if (file.language.blockCommentStyle && blockCommentLines > 0 && line.startsWith(file.language.blockCommentStyle.end)) {
+                    // We must check for block comment end _before_ we check for block comment continuation,
+                    // because the block comment continuation is frequently a substring of the block comment
+                    // end (e.g. in languages with C-style comments, "*" is a substring of "*/")
+                    blockCommentLines++;
+                    sum += blockCommentLines;
+                    blockCommentLines = 0;
+                }
+                else if (file.language.blockCommentStyle && blockCommentLines > 0 && line.startsWith(file.language.blockCommentStyle.continuation)) {
+                    blockCommentLines++;
+                }
+                else {
+                    blockCommentLines = 0;
+                }
+            }
+        }
+        return sum;
+    }
+}
+exports["default"] = Comments;
+
+
+/***/ }),
+
+/***/ 7486:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const feature_1 = __nccwpck_require__(6085);
+class Deletions extends feature_1.default {
+    evaluate() {
+        return this.changeset.files.reduce((sum, f) => sum + f.deletions, 0);
+    }
+}
+exports["default"] = Deletions;
+
+
+/***/ }),
+
+/***/ 1449:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const feature_1 = __nccwpck_require__(6085);
+class SingleWords extends feature_1.default {
+    evaluate() {
+        return this.changeset.files.reduce((sum, file) => {
+            for (const chunk of file.chunks) {
+                for (const change of chunk.changes) {
+                    if (change.type == "add") {
+                        sum += (change
+                            .content
+                            .split("\n")
+                            .filter((line) => line.trim().match(/^\+\s*["'`,\w-]+\s*$/))
+                            .length);
+                    }
+                }
+            }
+            return sum;
+        }, 0);
+    }
+}
+exports["default"] = SingleWords;
+
+
+/***/ }),
+
+/***/ 8474:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const feature_1 = __nccwpck_require__(6085);
+class Tests extends feature_1.default {
+    evaluate() {
+        return this.changeset.files.reduce((sum, f) => sum + (f.isTestFile ? f.additions : 0), 0);
+    }
+}
+exports["default"] = Tests;
+
+
+/***/ }),
+
+/***/ 5134:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const feature_1 = __nccwpck_require__(6085);
+class Whitespace extends feature_1.default {
+    evaluate() {
+        return this.changeset.files.reduce((sum, file) => {
+            for (const chunk of file.chunks) {
+                for (const change of chunk.changes) {
+                    if (change.type == "add") {
+                        sum += (change
+                            .content
+                            .split("\n")
+                            // A line containing only a "+" in the diff is a whitespace-only line.
+                            .filter((line) => line.trim() == "+")
+                            .length);
+                    }
+                }
+            }
+            return sum;
+        }, 0);
+    }
+}
+exports["default"] = Whitespace;
+
+
+/***/ }),
+
 /***/ 56:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -6746,7 +6944,12 @@ class Formula {
         const stack = [];
         for (const { token, index } of this.expression.split(/\s+/).map((token, index) => ({ token, index }))) {
             if (!this.isSupportedToken(token)) {
-                result.addError({ message: `Formula contains unsupported token: ${token}`, tokenIndex: index });
+                result.addError({
+                    message: (`Formula contains unsupported token: ${token}.\n` +
+                        "A valid token is either a numeric literal or one of the following: " +
+                        `${this.validTokens().join(", ")}`),
+                    tokenIndex: index
+                });
                 return result;
             }
             if (stack.length == 0 && !this.isOperator(token)) {
@@ -6784,6 +6987,9 @@ class Formula {
     }
     isNumericConstant(token) {
         return !!token.match(NUMERIC_CONSTANT_RE);
+    }
+    validTokens() {
+        return operators_1.SUPPORTED_OPERATORS.map((op) => op.symbol).concat(Array.from(registry_1.FeatureRegistry.keys()));
     }
     applyOperator(result, stack, changeset) {
         let operator = undefined;
@@ -6908,14 +7114,27 @@ exports.SUPPORTED_OPERATORS = [
 /***/ }),
 
 /***/ 4982:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FeatureRegistry = void 0;
+const additions_1 = __nccwpck_require__(590);
+const comments_1 = __nccwpck_require__(5885);
+const deletions_1 = __nccwpck_require__(7486);
+const single_words_1 = __nccwpck_require__(1449);
+const tests_1 = __nccwpck_require__(8474);
+const whitespace_1 = __nccwpck_require__(5134);
 /** The collection of features that are available for use in an evaluation formula. */
-exports.FeatureRegistry = new Map();
+exports.FeatureRegistry = new Map([
+    [additions_1.default.variableName(), additions_1.default],
+    [comments_1.default.variableName(), comments_1.default],
+    [deletions_1.default.variableName(), deletions_1.default],
+    [single_words_1.default.variableName(), single_words_1.default],
+    [tests_1.default.variableName(), tests_1.default],
+    [whitespace_1.default.variableName(), whitespace_1.default],
+]);
 
 
 /***/ }),

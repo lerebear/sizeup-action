@@ -21,22 +21,25 @@ export async function run(): Promise<void> {
 
     const config: string = core.getInput('configuration-file')
     if (config) {
-      core.info(`Reading configuration from ${config}`)
+      core.info(`Reading sizeup configuration from ${config}`)
     } else {
-      core.info('Using default configuration')
+      core.info('Using default sizeup configuration')
     }
 
+    core.debug(`github.context: ${github.context}`)
     const pullRequest = github.context.payload as PullRequest
 
-    const [_scheme, _blank, _domain, owner, repo, _path, number] = // eslint-disable-line @typescript-eslint/no-unused-vars
+    const [_scheme, _blank, _domain, owner, repo, _path, numberString] = // eslint-disable-line @typescript-eslint/no-unused-vars
       pullRequest.url.split('/')
+    const number = Number.parseInt(numberString, 10)
 
+    core.debug(`pull request: ${owner}/${repo}#${number}`)
     const octokit = github.getOctokit(core.getInput('token'))
     const diff = (
       await octokit.rest.pulls.get({
         owner,
         repo,
-        pull_number: Number.parseInt(number, 10),
+        pull_number: number,
         mediaType: { format: 'diff' }
       })
     ).data as unknown as string

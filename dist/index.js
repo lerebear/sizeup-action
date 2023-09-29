@@ -10435,7 +10435,7 @@ async function run() {
         else {
             core.info('Using default sizeup configuration');
         }
-        core.debug(`github.context: ${github.context}`);
+        core.debug(`github.context: ${JSON.stringify(github.context)}`);
         const pullRequest = github.context.payload;
         const [_scheme, _blank, _domain, owner, repo, _path, numberString] = // eslint-disable-line @typescript-eslint/no-unused-vars
          pullRequest.url.split('/');

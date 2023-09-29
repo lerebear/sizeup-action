@@ -1,4 +1,3 @@
-# Repository CODEOWNERS
+# CODEOWNERS
 
-* @actions/actions-runtime
-* @ncalteen
+* @lerebear

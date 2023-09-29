@@ -53,8 +53,11 @@ jobs:
         id: test-action
         uses: ./
         with:
-          milliseconds: 1000
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print Output
         id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+        run: |
+          echo Score: "${{ steps.test-action.outputs.score }}"
+          echo Category: "${{ steps.test-action.outputs.score }}"
+

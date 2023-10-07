@@ -6885,6 +6885,7 @@ exports.Formula = void 0;
 const operators_1 = __nccwpck_require__(8820);
 const registry_1 = __nccwpck_require__(4982);
 const score_1 = __nccwpck_require__(1778);
+const stack_1 = __nccwpck_require__(5014);
 const NUMERIC_CONSTANT_RE = /-?\d+(\.\d+)?/;
 /** Represents a mathematical expression that we use to evaluate a Changeset. */
 class Formula {
@@ -6899,29 +6900,53 @@ class Formula {
      */
     evaluate(changeset, categories) {
         const result = new score_1.Score(this.expression);
-        const stack = [];
-        for (const { token, index } of this.expression.split(/\s+/).map((token, index) => ({ token, index }))) {
+        const stack = new stack_1.Stack();
+        const tokens = this.expression.split(/\s+/);
+        while (tokens.length) {
+            const tokenPosition = tokens.length;
+            const token = tokens.pop();
+            const operator = this.toOperator(token);
             if (!this.isSupportedToken(token)) {
                 result.addError({
-                    message: (`Formula contains unsupported token: ${token}.\n` +
-                        "A valid token is either a numeric literal or one of the following: " +
-                        `${this.validTokens().join(", ")}`),
-                    tokenIndex: index
+                    message: (`Formula contains unsupported token: ${token}`),
+                    tokenPosition
                 });
                 return result;
             }
-            if (stack.length == 0 && !this.isOperator(token)) {
-                result.addError({ message: `Formula starts with a non-operator: ${token}`, tokenIndex: index });
+            if (this.isFeature(token)) {
+                const FeatureClass = registry_1.FeatureRegistry.get(token);
+                const feature = new FeatureClass(changeset);
+                const value = feature.evaluate();
+                result.recordVariableSubstitution(FeatureClass.variableName(), value);
+                stack.push(value);
+            }
+            else if (this.isNumericConstant(token)) {
+                stack.push(parseFloat(token));
+            }
+            else if (operator && stack.size() >= operator.arity) {
+                const operands = [];
+                let arity = operator.arity;
+                while (arity) {
+                    operands.push(stack.pop());
+                    arity--;
+                }
+                stack.push(operator.apply(...operands));
+            }
+            else if (operator) {
+                result.addError({
+                    message: (`Not enough operands for operator: ${operator.symbol}`),
+                    tokenPosition
+                });
                 return result;
             }
-            stack.push(token);
-            this.applyOperator(result, stack, changeset);
         }
-        if (stack.length != 1) {
-            result.addError({ message: `Formula contains the wrong number of operands`, tokenIndex: 0 });
+        if (stack.size() != 1) {
+            result.addError({ message: `Formula contains too many operands`, tokenPosition: 1 });
             return result;
         }
-        result.addValue(parseFloat(stack[0]), categories);
+        result.addValue(
+        // Round to two decimal places: https://stackoverflow.com/a/11832950
+        Math.round((stack.peek() + Number.EPSILON) * 100) / 100, categories);
         return result;
     }
     isSupportedToken(token) {
@@ -6945,47 +6970,6 @@ class Formula {
     }
     isNumericConstant(token) {
         return !!token.match(NUMERIC_CONSTANT_RE);
-    }
-    validTokens() {
-        return operators_1.SUPPORTED_OPERATORS.map((op) => op.symbol).concat(Array.from(registry_1.FeatureRegistry.keys()));
-    }
-    applyOperator(result, stack, changeset) {
-        let operator = undefined;
-        let operatorIndex = undefined;
-        for (let i = stack.length - 1; i >= 0; i--) {
-            operator = this.toOperator(stack[i]);
-            if (operator) {
-                operatorIndex = i;
-                break;
-            }
-        }
-        if (!operator || operatorIndex == undefined) {
-            return;
-        }
-        const operands = (stack
-            .slice(operatorIndex + 1, operatorIndex + operator.arity + 1)
-            .filter((o) => this.isOperand(o)));
-        if (operands.length != operator.arity) {
-            return;
-        }
-        const numericOperands = [];
-        for (const operand of operands) {
-            if (this.isFeature(operand)) {
-                const FeatureClass = registry_1.FeatureRegistry.get(operand);
-                const feature = new FeatureClass(changeset);
-                const value = feature.evaluate();
-                result.recordVariableSubstitution(FeatureClass.variableName(), value);
-                numericOperands.push(value);
-                continue;
-            }
-            if (this.isNumericConstant(operand)) {
-                numericOperands.push(parseFloat(operand));
-                continue;
-            }
-            throw new Error(`Unsupported operand: ${operand}`);
-        }
-        stack.splice(operatorIndex, operator.arity + 1);
-        stack.push(`${operator.apply(...numericOperands)}`);
     }
 }
 exports.Formula = Formula;
@@ -7144,7 +7128,7 @@ class Score {
     }
     toString({ spacing } = { spacing: 2 }) {
         return JSON.stringify(this, (key, value) => {
-            if (key == "category") {
+            if (key == "category" && value) {
                 return { name: value.name, lte: value.lte };
             }
             else if (value instanceof Map) {
@@ -7194,6 +7178,35 @@ class SizeUp {
     }
 }
 exports["default"] = SizeUp;
+
+
+/***/ }),
+
+/***/ 5014:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Stack = void 0;
+class Stack {
+    constructor() {
+        this.store = [];
+    }
+    push(elem) {
+        return this.store.push(elem);
+    }
+    peek() {
+        return this.store[this.store.length - 1];
+    }
+    pop() {
+        return this.store.pop();
+    }
+    size() {
+        return this.store.length;
+    }
+}
+exports.Stack = Stack;
 
 
 /***/ }),

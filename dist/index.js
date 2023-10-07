@@ -6885,7 +6885,6 @@ exports.Formula = void 0;
 const operators_1 = __nccwpck_require__(8820);
 const registry_1 = __nccwpck_require__(4982);
 const score_1 = __nccwpck_require__(1778);
-const stack_1 = __nccwpck_require__(5014);
 const NUMERIC_CONSTANT_RE = /-?\d+(\.\d+)?/;
 /** Represents a mathematical expression that we use to evaluate a Changeset. */
 class Formula {
@@ -6900,7 +6899,7 @@ class Formula {
      */
     evaluate(changeset, categories) {
         const result = new score_1.Score(this.expression);
-        const stack = new stack_1.Stack();
+        const stack = [];
         const tokens = this.expression.split(/\s+/);
         while (tokens.length) {
             const tokenPosition = tokens.length;
@@ -6923,13 +6922,8 @@ class Formula {
             else if (this.isNumericConstant(token)) {
                 stack.push(parseFloat(token));
             }
-            else if (operator && stack.size() >= operator.arity) {
-                const operands = [];
-                let arity = operator.arity;
-                while (arity) {
-                    operands.push(stack.pop());
-                    arity--;
-                }
+            else if (operator && stack.length >= operator.arity) {
+                const operands = stack.splice(stack.length - operator.arity, operator.arity).reverse();
                 stack.push(operator.apply(...operands));
             }
             else if (operator) {
@@ -6940,13 +6934,13 @@ class Formula {
                 return result;
             }
         }
-        if (stack.size() != 1) {
+        if (stack.length != 1) {
             result.addError({ message: `Formula contains too many operands`, tokenPosition: 1 });
             return result;
         }
         result.addValue(
         // Round to two decimal places: https://stackoverflow.com/a/11832950
-        Math.round((stack.peek() + Number.EPSILON) * 100) / 100, categories);
+        Math.round((stack[0] + Number.EPSILON) * 100) / 100, categories);
         return result;
     }
     isSupportedToken(token) {
@@ -7178,35 +7172,6 @@ class SizeUp {
     }
 }
 exports["default"] = SizeUp;
-
-
-/***/ }),
-
-/***/ 5014:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Stack = void 0;
-class Stack {
-    constructor() {
-        this.store = [];
-    }
-    push(elem) {
-        return this.store.push(elem);
-    }
-    peek() {
-        return this.store[this.store.length - 1];
-    }
-    pop() {
-        return this.store.pop();
-    }
-    size() {
-        return this.store.length;
-    }
-}
-exports.Stack = Stack;
 
 
 /***/ }),

@@ -94,3 +94,11 @@ The default configuration that is used when no configuration file is provided ca
 The full specification for the configuration file is provide by the JSON schema at [`src/config/schema.json`](./src/config/schema/json).
 
 For details on what configuration can be provided under the `sizeup` key, please see the [`sizeup` library's configuration guide](https://github.com/lerebear/sizeup#configuration).
+
+## Development
+
+This section contains notes for how to develop this library.
+
+### Regenerating the Typescript interface for the configuration schema
+
+Follow the same [procedure](https://github.com/lerebear/sizeup#regenerating-the-typescript-interface-for-the-configuration-schema) outlined for this process in the sizeup repository.

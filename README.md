@@ -1,6 +1,6 @@
 # SizeUp Action
 
-This repository contains a GitHub Action that wraps the [`sizeup-core` library](https://github.com/lerebear/sizeup-core) in order to provide a way to estimate the reviewability of a pull request as it goes through its lifecycle on GitHub.
+This repository contains a GitHub Action that wraps the [`sizeup` library](https://github.com/lerebear/sizeup-core) in order to provide a way to estimate the reviewability of a pull request as it goes through its lifecycle on GitHub.
 
 ## Usage
 
@@ -31,7 +31,7 @@ See [`action.yml`](./action.yml)
 
 ## Configuration
 
-This Action can be configured by specifying the `configuration-file` input. The value of that input should be the path to a YAML file that contains configuration for this Action and the underlying `sizeup-core` library.
+This Action can be configured by specifying the `configuration-file` input. The value of that input should be the path to a YAML file that contains configuration for this Action and the underlying `sizeup` library.
 
 An example configuration file looks like this:
 

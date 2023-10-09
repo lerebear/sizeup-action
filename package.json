@@ -1,6 +1,6 @@
 {
   "name": "sizeup-action",
-  "description": "GitHub Actions wrapper for the sizeup-core library",
+  "description": "GitHub Actions wrapper for the sizeup library",
   "version": "0.1.2",
   "author": "Ọlálérè Williams",
   "private": true,

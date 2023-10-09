@@ -8,7 +8,7 @@ See [`action.yml`](./action.yml)
 
 ```yaml
 - name: Estimate pull request reviewability
-  uses: lerebear/sizeup-action@v0.1.2
+  uses: lerebear/sizeup-action@v0
   id: sizeup-action
   with:
     # A GitHub API token capable of reading pull requests on the repository

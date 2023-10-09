@@ -6556,7 +6556,7 @@ function _typeof(obj){"@babel/helpers - typeof";return _typeof="function"==typeo
 
 /***/ }),
 
-/***/ 6546:
+/***/ 6535:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -6627,15 +6627,15 @@ exports.CategoryConfiguration = CategoryConfiguration;
 
 /***/ }),
 
-/***/ 3155:
+/***/ 2028:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const difflib = __nccwpck_require__(4833);
-const linguist_1 = __nccwpck_require__(1666);
-const minimatch_1 = __nccwpck_require__(3444);
+const linguist_1 = __nccwpck_require__(3139);
+const minimatch_1 = __nccwpck_require__(5937);
 /**
  * This class represents changes to code whose reviewability we will attempt to
  * estimate. A changest comes either from a pull request, or from the files
@@ -6677,7 +6677,7 @@ exports["default"] = Changeset;
 
 /***/ }),
 
-/***/ 6085:
+/***/ 7184:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -6705,13 +6705,13 @@ exports["default"] = Feature;
 
 /***/ }),
 
-/***/ 590:
+/***/ 9813:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const feature_1 = __nccwpck_require__(6085);
+const feature_1 = __nccwpck_require__(7184);
 class Additions extends feature_1.default {
     evaluate() {
         return this.changeset.files.reduce((sum, f) => sum + f.additions, 0);
@@ -6722,13 +6722,13 @@ exports["default"] = Additions;
 
 /***/ }),
 
-/***/ 5885:
+/***/ 4494:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const feature_1 = __nccwpck_require__(6085);
+const feature_1 = __nccwpck_require__(7184);
 class Comments extends feature_1.default {
     evaluate() {
         return this.changeset.files.reduce((sum, file) => sum + this.countCommentLines(file), 0);
@@ -6780,13 +6780,13 @@ exports["default"] = Comments;
 
 /***/ }),
 
-/***/ 7486:
+/***/ 679:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const feature_1 = __nccwpck_require__(6085);
+const feature_1 = __nccwpck_require__(7184);
 class Deletions extends feature_1.default {
     evaluate() {
         return this.changeset.files.reduce((sum, f) => sum + f.deletions, 0);
@@ -6797,13 +6797,13 @@ exports["default"] = Deletions;
 
 /***/ }),
 
-/***/ 1449:
+/***/ 7558:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const feature_1 = __nccwpck_require__(6085);
+const feature_1 = __nccwpck_require__(7184);
 class SingleWords extends feature_1.default {
     evaluate() {
         return this.changeset.files.reduce((sum, file) => {
@@ -6827,13 +6827,13 @@ exports["default"] = SingleWords;
 
 /***/ }),
 
-/***/ 8474:
+/***/ 2513:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const feature_1 = __nccwpck_require__(6085);
+const feature_1 = __nccwpck_require__(7184);
 class Tests extends feature_1.default {
     evaluate() {
         return this.changeset.files.reduce((sum, f) => sum + (f.isTestFile ? f.additions : 0), 0);
@@ -6844,13 +6844,13 @@ exports["default"] = Tests;
 
 /***/ }),
 
-/***/ 5134:
+/***/ 6496:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const feature_1 = __nccwpck_require__(6085);
+const feature_1 = __nccwpck_require__(7184);
 class Whitespace extends feature_1.default {
     evaluate() {
         return this.changeset.files.reduce((sum, file) => {
@@ -6875,16 +6875,16 @@ exports["default"] = Whitespace;
 
 /***/ }),
 
-/***/ 56:
+/***/ 2609:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Formula = void 0;
-const operators_1 = __nccwpck_require__(8820);
-const registry_1 = __nccwpck_require__(4982);
-const score_1 = __nccwpck_require__(1778);
+const operators_1 = __nccwpck_require__(9996);
+const registry_1 = __nccwpck_require__(3351);
+const score_1 = __nccwpck_require__(436);
 const NUMERIC_CONSTANT_RE = /-?\d+(\.\d+)?/;
 /** Represents a mathematical expression that we use to evaluate a Changeset. */
 class Formula {
@@ -6971,7 +6971,7 @@ exports.Formula = Formula;
 
 /***/ }),
 
-/***/ 1666:
+/***/ 3139:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7016,7 +7016,7 @@ const SUPPORTED_LANGUAGES = [
 
 /***/ }),
 
-/***/ 8820:
+/***/ 9996:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7049,19 +7049,19 @@ exports.SUPPORTED_OPERATORS = [
 
 /***/ }),
 
-/***/ 4982:
+/***/ 3351:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FeatureRegistry = void 0;
-const additions_1 = __nccwpck_require__(590);
-const comments_1 = __nccwpck_require__(5885);
-const deletions_1 = __nccwpck_require__(7486);
-const single_words_1 = __nccwpck_require__(1449);
-const tests_1 = __nccwpck_require__(8474);
-const whitespace_1 = __nccwpck_require__(5134);
+const additions_1 = __nccwpck_require__(9813);
+const comments_1 = __nccwpck_require__(4494);
+const deletions_1 = __nccwpck_require__(679);
+const single_words_1 = __nccwpck_require__(7558);
+const tests_1 = __nccwpck_require__(2513);
+const whitespace_1 = __nccwpck_require__(6496);
 /** The collection of features that are available for use in an evaluation formula. */
 exports.FeatureRegistry = new Map([
     [additions_1.default.variableName(), additions_1.default],
@@ -7075,7 +7075,7 @@ exports.FeatureRegistry = new Map([
 
 /***/ }),
 
-/***/ 1778:
+/***/ 436:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7139,18 +7139,19 @@ exports.Score = Score;
 
 /***/ }),
 
-/***/ 2103:
+/***/ 4296:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const changeset_1 = __nccwpck_require__(3155);
-const formula_1 = __nccwpck_require__(56);
+exports.Score = exports.SizeUp = void 0;
+const changeset_1 = __nccwpck_require__(2028);
+const formula_1 = __nccwpck_require__(2609);
 const YAML = __nccwpck_require__(4083);
 const fs = __nccwpck_require__(7147);
 const path = __nccwpck_require__(1017);
-const category_configuration_1 = __nccwpck_require__(6546);
+const category_configuration_1 = __nccwpck_require__(6535);
 class SizeUp {
     /**
      * Evaluates a diff for reviewability.
@@ -7171,12 +7172,14 @@ class SizeUp {
         return formula.evaluate(changeset, categories);
     }
 }
-exports["default"] = SizeUp;
+exports.SizeUp = SizeUp;
+var score_1 = __nccwpck_require__(436);
+Object.defineProperty(exports, "Score", ({ enumerable: true, get: function () { return score_1.Score; } }));
 
 
 /***/ }),
 
-/***/ 2269:
+/***/ 3202:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var balanced = __nccwpck_require__(9417);
@@ -10568,14 +10571,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const sizeup_1 = __importDefault(__nccwpck_require__(2103));
+const sizeup_core_1 = __nccwpck_require__(4296);
 const YAML = __importStar(__nccwpck_require__(4083));
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
@@ -10660,7 +10660,7 @@ async function evaluatePullRequest(pull, config) {
         fs.mkdirSync(path.dirname(sizeupConfigFile));
         fs.writeFileSync(sizeupConfigFile, YAML.stringify(config.sizeup));
     }
-    const score = sizeup_1.default.evaluate(diff, sizeupConfigFile);
+    const score = sizeup_core_1.SizeUp.evaluate(diff, sizeupConfigFile);
     if (sizeupConfigFile) {
         fs.rmSync(sizeupConfigFile, { force: true, recursive: true });
     }
@@ -10958,7 +10958,7 @@ module.exports = require("zlib");
 
 /***/ }),
 
-/***/ 4890:
+/***/ 1897:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -10979,7 +10979,7 @@ exports.assertValidPattern = assertValidPattern;
 
 /***/ }),
 
-/***/ 4640:
+/***/ 9698:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -10987,8 +10987,8 @@ exports.assertValidPattern = assertValidPattern;
 // parse a single path portion
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AST = void 0;
-const brace_expressions_js_1 = __nccwpck_require__(3202);
-const unescape_js_1 = __nccwpck_require__(1817);
+const brace_expressions_js_1 = __nccwpck_require__(4008);
+const unescape_js_1 = __nccwpck_require__(2839);
 const types = new Set(['!', '?', '+', '*', '@']);
 const isExtglobType = (c) => types.has(c);
 // Patterns that get prepended to bind to the start of either the
@@ -11575,7 +11575,7 @@ exports.AST = AST;
 
 /***/ }),
 
-/***/ 3202:
+/***/ 4008:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -11734,7 +11734,7 @@ exports.parseClass = parseClass;
 
 /***/ }),
 
-/***/ 7909:
+/***/ 974:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -11763,7 +11763,7 @@ exports.escape = escape;
 
 /***/ }),
 
-/***/ 3444:
+/***/ 5937:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -11773,11 +11773,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.unescape = exports.escape = exports.AST = exports.Minimatch = exports.match = exports.makeRe = exports.braceExpand = exports.defaults = exports.filter = exports.GLOBSTAR = exports.sep = exports.minimatch = void 0;
-const brace_expansion_1 = __importDefault(__nccwpck_require__(2269));
-const assert_valid_pattern_js_1 = __nccwpck_require__(4890);
-const ast_js_1 = __nccwpck_require__(4640);
-const escape_js_1 = __nccwpck_require__(7909);
-const unescape_js_1 = __nccwpck_require__(1817);
+const brace_expansion_1 = __importDefault(__nccwpck_require__(3202));
+const assert_valid_pattern_js_1 = __nccwpck_require__(1897);
+const ast_js_1 = __nccwpck_require__(9698);
+const escape_js_1 = __nccwpck_require__(974);
+const unescape_js_1 = __nccwpck_require__(2839);
 const minimatch = (p, pattern, options = {}) => {
     (0, assert_valid_pattern_js_1.assertValidPattern)(pattern);
     // shortcut: comments match nothing.
@@ -12766,11 +12766,11 @@ class Minimatch {
 }
 exports.Minimatch = Minimatch;
 /* c8 ignore start */
-var ast_js_2 = __nccwpck_require__(4640);
+var ast_js_2 = __nccwpck_require__(9698);
 Object.defineProperty(exports, "AST", ({ enumerable: true, get: function () { return ast_js_2.AST; } }));
-var escape_js_2 = __nccwpck_require__(7909);
+var escape_js_2 = __nccwpck_require__(974);
 Object.defineProperty(exports, "escape", ({ enumerable: true, get: function () { return escape_js_2.escape; } }));
-var unescape_js_2 = __nccwpck_require__(1817);
+var unescape_js_2 = __nccwpck_require__(2839);
 Object.defineProperty(exports, "unescape", ({ enumerable: true, get: function () { return unescape_js_2.unescape; } }));
 /* c8 ignore stop */
 exports.minimatch.AST = ast_js_1.AST;
@@ -12781,7 +12781,7 @@ exports.minimatch.unescape = unescape_js_1.unescape;
 
 /***/ }),
 
-/***/ 1817:
+/***/ 2839:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";

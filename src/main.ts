@@ -1,8 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { PullRequest, Label } from '@octokit/webhooks-types' // eslint-disable-line import/no-unresolved
-import SizeUp from 'sizeup'
-import { Score } from 'sizeup/dist/score'
+import { SizeUp, Score } from 'sizeup-core'
 import * as YAML from 'yaml'
 import * as fs from 'fs'
 import * as path from 'path'

@@ -1,6 +1,6 @@
 # SizeUp Action
 
-This repository contains a GitHub Action that wraps the [`sizeup` library](https://github.com/lerebear/sizeup) in order to provide a way to estimate the reviewability of a pull request as it goes through its lifecycle on GitHub.
+This repository contains a GitHub Action that wraps the [`sizeup-core` library](https://github.com/lerebear/sizeup-core) in order to provide a way to estimate the reviewability of a pull request as it goes through its lifecycle on GitHub.
 
 ## Usage
 
@@ -8,7 +8,7 @@ See [`action.yml`](./action.yml)
 
 ```yaml
 - name: Estimate pull request reviewability
-  uses: lerebear/sizeup-action@main
+  uses: lerebear/sizeup-action@v0.1.2
   id: sizeup-action
   with:
     # A GitHub API token capable of reading pull requests on the repository
@@ -31,7 +31,7 @@ See [`action.yml`](./action.yml)
 
 ## Configuration
 
-This Action can be configured by specifying the `configuration-file` input. The value of that input should be the path to a YAML file that contains configuration for this Action and the underlying `sizeup` library.
+This Action can be configured by specifying the `configuration-file` input. The value of that input should be the path to a YAML file that contains configuration for this Action and the underlying `sizeup-core` library.
 
 An example configuration file looks like this:
 
@@ -52,7 +52,7 @@ optIns:
   - glortho
 
 # Configuration for how to evaluate pull requests.
-# This is of the same format that `sizeup` accepts directly.
+# This is of the same format that `sizeup-core` accepts directly.
 sizeup:
   categories:
     - name: extra small
@@ -93,7 +93,7 @@ The default configuration that is used when no configuration file is provided ca
 
 The full specification for the configuration file is provide by the JSON schema at [`src/config/schema.json`](./src/config/schema/json).
 
-For details on what configuration can be provided under the `sizeup` key, please see the [`sizeup` library's configuration guide](https://github.com/lerebear/sizeup#configuration).
+For details on what configuration can be provided under the `sizeup` key, please see the [`sizeup-core` library's configuration guide](https://github.com/lerebear/sizeup-core#configuration).
 
 ## Development
 
@@ -101,4 +101,4 @@ This section contains notes for how to develop this library.
 
 ### Regenerating the Typescript interface for the configuration schema
 
-Follow the same [procedure](https://github.com/lerebear/sizeup#regenerating-the-typescript-interface-for-the-configuration-schema) outlined for this process in the sizeup repository.
+Follow the same [procedure](https://github.com/lerebear/sizeup-core#regenerating-the-typescript-interface-for-the-configuration-schema) outlined for this process in the `sizeup-core` repository.

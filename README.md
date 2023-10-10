@@ -85,7 +85,6 @@ sizeup:
         color: 5d9801
     - name: medium
       lte: 100
-      threshold: true
       label:
         name: m
         color: 7f7203

@@ -13,7 +13,6 @@ categories:
       color: 5d9801
   - name: medium
     lte: 100
-    threshold: true
     label:
       name: m
       description: Should be of average difficulty to review

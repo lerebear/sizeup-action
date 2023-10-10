@@ -23,7 +23,7 @@ commenting:
   #   - threshold
   #   - score
   #   - category
-  scoreThresholdExceededCommentTemplate: |
+  commentTemplate: |
     👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
 
     [Research](https://www.cabird.com/static/93aba3256c80506d3948983db34d3ba3/rigby2013convergent.pdf) has shown that this makes it harder for reviewers to provide quality feedback.

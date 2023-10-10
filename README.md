@@ -61,7 +61,7 @@ commenting:
   #   - threshold
   #   - score
   #   - category
-  scoreThresholdExceededCommentTemplate: |
+  commentTemplate: |
     👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
 
 # List of users for whom we should run this workflow

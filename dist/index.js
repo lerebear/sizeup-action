@@ -10587,6 +10587,7 @@ const DEFAULT_COMMENT_TEMPLATE = `
 
 We recommend that you reduce the size of this PR by separating commits into stacked PRs.
 `;
+const DEFAULT_SCORE_THRESHOLD = 100;
 /**
  * The main function for the action.
  *
@@ -10697,7 +10698,7 @@ async function applyCategoryLabel(pull, score, config) {
 async function ensureLabelExists(pull, score, config) {
     let response;
     const label = score.category.label;
-    const prefix = configOrDefault(config.categoryLabelPrefix, DEFAULT_LABEL_PREFIX);
+    const prefix = configOrDefault(config.labeling?.categoryLabelPrefix, DEFAULT_LABEL_PREFIX);
     const prefixedLabelName = `${prefix}${label.name}`;
     const octokit = github.getOctokit(core.getInput('token'));
     try {
@@ -10708,7 +10709,7 @@ async function ensureLabelExists(pull, score, config) {
         });
     }
     catch (e) {
-        if (configOrDefault(config.applyCategoryLabels, true)) {
+        if (configOrDefault(config.labeling?.applyCategoryLabels, true)) {
             core.info(`Creating new label "${prefixedLabelName}"`);
             response = await octokit.rest.issues.createLabel({
                 owner: pull.base.repo.owner.login,
@@ -10733,7 +10734,7 @@ async function ensureLabelExists(pull, score, config) {
  */
 async function applyLabel(pull, score, config) {
     const octokit = github.getOctokit(core.getInput('token'));
-    const labelPrefix = configOrDefault(config.categoryLabelPrefix, DEFAULT_LABEL_PREFIX);
+    const labelPrefix = configOrDefault(config.labeling?.categoryLabelPrefix, DEFAULT_LABEL_PREFIX);
     const newLabelName = `${labelPrefix}${score.category.label.name}`;
     const labelsToAdd = [newLabelName];
     const labelsToRemove = [];
@@ -10745,7 +10746,8 @@ async function applyLabel(pull, score, config) {
             labelsToRemove.push(existingLabel.name);
         }
     }
-    if (labelsToAdd.length && configOrDefault(config.applyCategoryLabels, true)) {
+    if (labelsToAdd.length &&
+        configOrDefault(config.labeling?.applyCategoryLabels, true)) {
         core.info(`Applying category label "${labelsToAdd[0]}"`);
         await octokit.rest.issues.addLabels({
             owner: pull.base.repo.owner.login,
@@ -10761,7 +10763,7 @@ async function applyLabel(pull, score, config) {
         core.info(`Correct "${newLabelName}" category label has already been applied`);
     }
     for (const labelName of labelsToRemove) {
-        if (configOrDefault(config.applyCategoryLabels, true)) {
+        if (configOrDefault(config.labeling?.applyCategoryLabels, true)) {
             core.info(`Removing stale category label "${labelName}"`);
             try {
                 await octokit.rest.issues.removeLabel({
@@ -10789,17 +10791,18 @@ async function applyLabel(pull, score, config) {
  * @param config The configuration for this workflow run
  */
 async function addScoreThresholdExceededComment(pull, score, config) {
-    if (score.result <= score.threshold)
+    const threshold = configOrDefault(config.commenting?.scoreThreshold, DEFAULT_SCORE_THRESHOLD);
+    if (score.result <= threshold)
         return;
-    const commentTemplate = config.scoreThresholdExceededCommentTemplate !== undefined
-        ? config.scoreThresholdExceededCommentTemplate
+    const commentTemplate = config.commenting?.commentTemplate !== undefined
+        ? config.commenting?.commentTemplate
         : DEFAULT_COMMENT_TEMPLATE;
     const comment = commentTemplate
         .replaceAll('{{author}}', pull.user.login)
         .replaceAll('{{score}}', `${score.result}`)
         .replaceAll('{{category}}', score.category.name)
-        .replaceAll('{{threshold}}', `${score.threshold}`);
-    if (!configOrDefault(config.addCommentWhenScoreThresholdHasBeenExceeded, true)) {
+        .replaceAll('{{threshold}}', `${threshold}`);
+    if (!configOrDefault(config.commenting?.addCommentWhenScoreThresholdHasBeenExceeded, true)) {
         const indentedComment = comment
             .split('\n')
             .map(l => `  ${l}`)

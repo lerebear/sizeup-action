@@ -15,6 +15,7 @@ const DEFAULT_COMMENT_TEMPLATE = `
 
 We recommend that you reduce the size of this PR by separating commits into stacked PRs.
 `
+const DEFAULT_SCORE_THRESHOLD = 100
 
 /**
  * The main function for the action.
@@ -164,7 +165,7 @@ async function ensureLabelExists(
   let response
   const label = score.category!.label!
   const prefix = configOrDefault(
-    config.categoryLabelPrefix,
+    config.labeling?.categoryLabelPrefix,
     DEFAULT_LABEL_PREFIX
   )
   const prefixedLabelName = `${prefix}${label.name}`
@@ -177,7 +178,7 @@ async function ensureLabelExists(
       name: prefixedLabelName
     })
   } catch (e) {
-    if (configOrDefault(config.applyCategoryLabels, true)) {
+    if (configOrDefault(config.labeling?.applyCategoryLabels, true)) {
       core.info(`Creating new label "${prefixedLabelName}"`)
       response = await octokit.rest.issues.createLabel({
         owner: pull.base.repo.owner.login,
@@ -208,7 +209,7 @@ async function applyLabel(
 ): Promise<void> {
   const octokit = github.getOctokit(core.getInput('token'))
   const labelPrefix = configOrDefault(
-    config.categoryLabelPrefix,
+    config.labeling?.categoryLabelPrefix,
     DEFAULT_LABEL_PREFIX
   )
   const newLabelName = `${labelPrefix}${score.category!.label!.name}`
@@ -223,7 +224,10 @@ async function applyLabel(
     }
   }
 
-  if (labelsToAdd.length && configOrDefault(config.applyCategoryLabels, true)) {
+  if (
+    labelsToAdd.length &&
+    configOrDefault(config.labeling?.applyCategoryLabels, true)
+  ) {
     core.info(`Applying category label "${labelsToAdd[0]}"`)
     await octokit.rest.issues.addLabels({
       owner: pull.base.repo.owner.login,
@@ -240,7 +244,7 @@ async function applyLabel(
   }
 
   for (const labelName of labelsToRemove) {
-    if (configOrDefault(config.applyCategoryLabels, true)) {
+    if (configOrDefault(config.labeling?.applyCategoryLabels, true)) {
       core.info(`Removing stale category label "${labelName}"`)
       try {
         await octokit.rest.issues.removeLabel({
@@ -271,21 +275,28 @@ async function addScoreThresholdExceededComment(
   score: Score,
   config: Configuration
 ): Promise<void> {
-  if (score.result! <= score.threshold!) return
+  const threshold = configOrDefault(
+    config.commenting?.scoreThreshold,
+    DEFAULT_SCORE_THRESHOLD
+  )
+  if (score.result! <= threshold) return
 
   const commentTemplate =
-    config.scoreThresholdExceededCommentTemplate !== undefined
-      ? config.scoreThresholdExceededCommentTemplate
+    config.commenting?.commentTemplate !== undefined
+      ? config.commenting?.commentTemplate
       : DEFAULT_COMMENT_TEMPLATE
 
   const comment = commentTemplate
     .replaceAll('{{author}}', pull.user.login)
     .replaceAll('{{score}}', `${score.result!}`)
     .replaceAll('{{category}}', score.category!.name)
-    .replaceAll('{{threshold}}', `${score.threshold!}`)
+    .replaceAll('{{threshold}}', `${threshold}`)
 
   if (
-    !configOrDefault(config.addCommentWhenScoreThresholdHasBeenExceeded, true)
+    !configOrDefault(
+      config.commenting?.addCommentWhenScoreThresholdHasBeenExceeded,
+      true
+    )
   ) {
     const indentedComment = comment
       .split('\n')

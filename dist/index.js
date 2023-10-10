@@ -6597,16 +6597,7 @@ class CategoryConfiguration {
             throw new Error("You can only specify one category without an `lte` value, but we found at least two: " +
                 catchAllCategories.map((c) => c.name));
         }
-        const thresholdCategories = sorted.filter((category) => category.threshold);
-        if (!thresholdCategories.length) {
-            throw new Error("You must provide one category with a `threshold` value to act as the warning threshold");
-        }
-        if (thresholdCategories.length > 1) {
-            throw new Error("You can only specify one category with a `threshold` value, but we found at least two: " +
-                thresholdCategories.map((c) => c.name));
-        }
         this.categories = sorted;
-        this.threshold = thresholdCategories[0].lte;
     }
     /**
      *
@@ -7097,7 +7088,6 @@ class Score {
         this.error = error;
         this.result = undefined;
         this.category = undefined;
-        this.threshold = undefined;
     }
     /**
      * Records the result of evaluating the formula.
@@ -7109,7 +7099,6 @@ class Score {
         this.error = undefined;
         this.result = value;
         this.category = categories === null || categories === void 0 ? void 0 : categories.categorize(value);
-        this.threshold = categories === null || categories === void 0 ? void 0 : categories.threshold;
     }
     /**
      * Records that we used a particular value for a variable during evaluation.
@@ -7122,10 +7111,7 @@ class Score {
     }
     toString({ spacing } = { spacing: 2 }) {
         return JSON.stringify(this, (key, value) => {
-            if (key == "category" && value) {
-                return { name: value.name, lte: value.lte };
-            }
-            else if (value instanceof Map) {
+            if (value instanceof Map) {
                 return [...value];
             }
             else {

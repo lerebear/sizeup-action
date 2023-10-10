@@ -9,27 +9,41 @@
  */
 export interface Configuration {
   /**
-   * Whether or not to apply the score category label to each assessed pull request
+   * Configuration that controls how we apply score category labels to each assessed pull request
    */
-  applyCategoryLabels?: boolean
+  labeling?: {
+    /**
+     * Whether or not to apply the category label to each assessed pull request
+     */
+    applyCategoryLabels?: boolean
+    /**
+     * The prefix to add to each category label that we apply
+     */
+    categoryLabelPrefix?: string
+  }
   /**
-   * The prefix to add to each category label that we apply
+   * Configuration that controls how we add comments to assessed pull requests
    */
-  categoryLabelPrefix?: string
-  /**
-   * Whether or not to add a comment to each assessed pull request that exceeds the configured score threshold
-   */
-  addCommentWhenScoreThresholdHasBeenExceeded?: boolean
-  /**
-   * The template for the comment that should be added to each pull request that exceeds the configured score threshold
-   */
-  scoreThresholdExceededCommentTemplate?: string
+  commenting?: {
+    /**
+     * Whether or not to add a comment to each assessed pull request that exceeds the configured score threshold
+     */
+    addCommentWhenScoreThresholdHasBeenExceeded?: boolean
+    /**
+     * The score above which this tool will post a comment on the pull request.
+     */
+    scoreThreshold?: number
+    /**
+     * The template for the comment that should be added to each pull request that exceeds the configured score threshold
+     */
+    commentTemplate?: string
+  }
   /**
    * A list of GitHub handles for users or teams that have opted into this workflow
    *
    * @minItems 1
    */
-  optIns?: [string, ...string[]]
+  optIns?: string[]
   sizeup?: Configuration1
 }
 /**
@@ -41,70 +55,37 @@ export interface Configuration1 {
    *
    * @minItems 1
    */
-  categories?: [
-    {
+  categories?: {
+    /**
+     * human-friendly name of the category
+     */
+    name: string
+    /**
+     * A visual label that should be used to represent this category
+     */
+    label?: {
       /**
-       * human-friendly name of the category
+       * name of the label that should be used to represent this category
        */
       name: string
       /**
-       * A visual label that should be used to represent this category
+       * describes the meaning of the label that will be used to represent this category
        */
-      label?: {
-        /**
-         * name of the label that should be used to represent this category
-         */
-        name: string
-        /**
-         * describes the meaning of the label that will be used to represent this category
-         */
-        description?: string
-        /**
-         * preferred CSS hex color label that should be used to represent this category
-         */
-        color?: string
-      }
+      description?: string
       /**
-       * inclusive upper bound on the score that a pull request must have to be assigned this category
+       * preferred CSS hex color label that should be used to represent this category
        */
-      lte?: number
-      /**
-       * Whether or not this category marks the threshold above which we should warn about the diff being difficult to review
-       */
-      threshold?: boolean
-    },
-    ...{
-      /**
-       * human-friendly name of the category
-       */
-      name: string
-      /**
-       * A visual label that should be used to represent this category
-       */
-      label?: {
-        /**
-         * name of the label that should be used to represent this category
-         */
-        name: string
-        /**
-         * describes the meaning of the label that will be used to represent this category
-         */
-        description?: string
-        /**
-         * preferred CSS hex color label that should be used to represent this category
-         */
-        color?: string
-      }
-      /**
-       * inclusive upper bound on the score that a pull request must have to be assigned this category
-       */
-      lte?: number
-      /**
-       * Whether or not this category marks the threshold above which we should warn about the diff being difficult to review
-       */
-      threshold?: boolean
-    }[]
-  ]
+      color?: string
+    }
+    /**
+     * inclusive upper bound on the score that a pull request must have to be assigned this category
+     */
+    lte?: number
+    /**
+     * Whether or not this category marks the threshold above which we should warn about the diff being difficult to review
+     */
+    threshold?: boolean
+  }[]
   scoring?: {
     /**
      * an expression, written in prefix-notation, that describes how to combine features to produce a score

@@ -36,15 +36,33 @@ This Action can be configured by specifying the `configuration-file` input. The 
 An example configuration file looks like this:
 
 ```yaml
-# Whether or not to add a label to each pull request to indicate its assessed category
-applyCategoryLabels: true
+labeling:
 
-# The prefix to add to each category label that we apply.
-categoryLabelPrefix: "sizeup/"
+  # Whether or not to add a label to each pull request to indicate its assessed category
+  applyCategoryLabels: true
 
-# Whether or not to add a comment to each assessed pull request that exceeds
-# the recommended score threshold
-addCommentWhenScoreThresholdHasBeenExceeded: true
+  # The prefix to add to each category label that we apply.
+  categoryLabelPrefix: "sizeup/"
+
+commenting:
+
+  # Whether or not to comment on pull requests that exceed the configured score threshold
+  addCommentWhenScoreThresholdHasBeenExceeded: true
+
+  # The threshold above which we will add a comment to the assessed pull request.
+  scoreThreshold: 100
+
+  # The template for the comment that should be added to each pull request that
+  # exceeds the score threshold. Any of the following variables can be included
+  # in the template with surrounding curly braces (e.g. {{author}}) in order to
+  # interpolate a computed value into the comment:
+  #
+  #   - author
+  #   - threshold
+  #   - score
+  #   - category
+  scoreThresholdExceededCommentTemplate: |
+    👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
 
 # List of users for whom we should run this workflow
 optIns:

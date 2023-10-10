@@ -4,25 +4,42 @@
     "description": "YAML configuration accepted by sizeup-action",
     "type": "object",
     "properties": {
-        "applyCategoryLabels": {
-            "description": "Whether or not to apply the score category label to each assessed pull request",
-            "type": "boolean",
-            "default": true
+        "labeling": {
+            "description": "Configuration that controls how we apply score category labels to each assessed pull request",
+            "type": "object",
+            "properties": {
+                "applyCategoryLabels": {
+                    "description": "Whether or not to apply the category label to each assessed pull request",
+                    "type": "boolean",
+                    "default": true
+                },
+                "categoryLabelPrefix": {
+                    "description": "The prefix to add to each category label that we apply",
+                    "type": "string",
+                    "default": "sizeup/"
+                }
+            }
         },
-        "categoryLabelPrefix": {
-            "description": "The prefix to add to each category label that we apply",
-            "type": "string",
-            "default": "sizeup/"
-        },
-        "addCommentWhenScoreThresholdHasBeenExceeded": {
-            "description": "Whether or not to add a comment to each assessed pull request that exceeds the configured score threshold",
-            "type": "boolean",
-            "default": true
-        },
-        "scoreThresholdExceededCommentTemplate": {
-            "description": "The template for the comment that should be added to each pull request that exceeds the configured score threshold",
-            "type": "string",
-            "default": "👋 {{author}} this pull request exceeds the recommended reviewability score threshold of {{threshold}}. Your actual score was {{score}}.\n\n[Research](https://www.cabird.com/static/93aba3256c80506d3948983db34d3ba3/rigby2013convergent.pdf) has shown that this makes it harder for reviewers to provide quality feedback.\n\nWe recommend that you reduce the size of this PR by separating commits into stacked PRs."
+        "commenting": {
+            "description": "Configuration that controls how we add comments to assessed pull requests",
+            "type": "object",
+            "properties": {
+                "addCommentWhenScoreThresholdHasBeenExceeded": {
+                    "description": "Whether or not to add a comment to each assessed pull request that exceeds the configured score threshold",
+                    "type": "boolean",
+                    "default": true
+                },
+                "scoreThreshold": {
+                    "description": "The score above which this tool will post a comment on the pull request.",
+                    "type": "number",
+                    "default": 100
+                },
+                "commentTemplate": {
+                    "description": "The template for the comment that should be added to each pull request that exceeds the configured score threshold",
+                    "type": "string",
+                    "default": "👋 {{author}} this pull request exceeds the recommended reviewability score threshold of {{threshold}}. Your actual score was {{score}}.\n\n[Research](https://www.cabird.com/static/93aba3256c80506d3948983db34d3ba3/rigby2013convergent.pdf) has shown that this makes it harder for reviewers to provide quality feedback.\n\nWe recommend that you reduce the size of this PR by separating commits into stacked PRs."
+                }
+            }
         },
         "optIns": {
             "description": "A list of GitHub handles for users or teams that have opted into this workflow",

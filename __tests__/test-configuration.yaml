@@ -1,2 +1,4 @@
-applyCategoryLabels: false
-addCommentWhenScoreThresholdHasBeenExceeded: false
+labeling:
+  applyCategoryLabels: false
+commenting:
+  addCommentWhenScoreThresholdHasBeenExceeded: false

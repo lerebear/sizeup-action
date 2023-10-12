@@ -6804,7 +6804,7 @@ class SingleWords extends feature_1.default {
                         sum += (change
                             .content
                             .split("\n")
-                            .filter((line) => line.trim().match(/^\+\s*["'`,\w-]+\s*$/))
+                            .filter((line) => line.trim().match(/^\+\s*(["'`]?)\b[\w-]+\b\1\S?$/))
                             .length);
                     }
                 }

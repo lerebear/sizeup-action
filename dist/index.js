@@ -6827,7 +6827,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const feature_1 = __nccwpck_require__(7184);
 class Tests extends feature_1.default {
     evaluate() {
-        return this.changeset.files.reduce((sum, f) => sum + (f.isTestFile ? f.additions : 0), 0);
+        return this.changeset.files.reduce((sum, f) => sum + (f.isTestFile ? f.additions + f.deletions : 0), 0);
     }
 }
 exports["default"] = Tests;
@@ -7148,13 +7148,17 @@ class SizeUp {
      */
     static evaluate(diff, configPath) {
         var _a;
-        const config = configPath ? YAML.parse(fs.readFileSync(configPath, "utf8")) : {};
+        let userSuppliedConfig = {};
+        if (configPath) {
+            const parsed = YAML.parse(fs.readFileSync(configPath, "utf8"));
+            userSuppliedConfig = ('sizeup' in parsed) ? parsed.sizeup : parsed;
+        }
         const defaultConfig = YAML.parse(fs.readFileSync(__nccwpck_require__.ab + "default.yaml", "utf8"));
-        const ignoredFilePatterns = config.ignoredFilePatterns || defaultConfig.ignoredFilePatterns;
-        const testFilePatterns = config.testFilePatterns || defaultConfig.testFilePatterns;
+        const ignoredFilePatterns = userSuppliedConfig.ignoredFilePatterns || defaultConfig.ignoredFilePatterns;
+        const testFilePatterns = userSuppliedConfig.testFilePatterns || defaultConfig.testFilePatterns;
         const changeset = new changeset_1.default({ diff, ignoredFilePatterns, testFilePatterns });
-        const categories = new category_configuration_1.CategoryConfiguration(config.categories || defaultConfig.categories);
-        const formula = new formula_1.Formula(((_a = config.scoring) === null || _a === void 0 ? void 0 : _a.formula) || defaultConfig.scoring.formula);
+        const categories = new category_configuration_1.CategoryConfiguration(userSuppliedConfig.categories || defaultConfig.categories);
+        const formula = new formula_1.Formula(((_a = userSuppliedConfig.scoring) === null || _a === void 0 ? void 0 : _a.formula) || defaultConfig.scoring.formula);
         return formula.evaluate(changeset, categories);
     }
 }

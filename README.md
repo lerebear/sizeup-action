@@ -4,30 +4,55 @@ This repository contains a GitHub Action that wraps the [`sizeup` library](https
 
 ## Usage
 
-See [`action.yml`](./action.yml)
+Create an Actions workflow configuration file (e.g  `.github/workflows/sizeup.yaml`) with the following contents:
 
 ```yaml
-- name: Estimate pull request reviewability
-  uses: lerebear/sizeup-action@v0
-  id: sizeup-action
-  with:
-    # A GitHub API token capable of reading pull requests on the repository
-    # in which this workflow is being used.
-    #
-    # A good default value is the default `GITHUB_TOKEN` secret used below.
-    token: "${{ secrets.GITHUB_TOKEN }}"
+name: SizeUp
 
-    # Path to a YAML configuration file for this action that is stored in this
-    # repository. To use this, you must add a workflow step prior to this one
-    # that uses `actions/checkout` to checkout a local copy of the repository
-    # so that we can resolve the path to the config file.
-    #
-    # To learn about which configuration values are supported, see:
-    # https://github.com/lerebear/sizeup-action#configuration
-    #
-    # Default: "" (which instructs the Action to use the default configuration)
-    configuration-file: ""
+on: pull_request
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  sizeup:
+    name: Estimate reviewability
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out a copy of this repository so we can load the configuration
+      # file for Action later on.
+      - name: Checkout this repository
+        uses: actions/checkout@v3
+
+      # Run the estimation tool
+      - name: Run sizeup
+        # TODO: Replace the version below with your desired version.
+        uses: lerebear/sizeup-action@v0.2.1
+        id: sizeup-action
+
+        with:
+          # A GitHub API token capable of reading pull requests from this
+          # repository.
+          #
+          # In this example, we've used the `permissions` key above to request
+          # the necessary permissions for the default `GITHUB_TOKEN` secret,
+          # and then we've passed it along here.
+          #
+          # This input is required.
+          token: "${{ secrets.GITHUB_TOKEN }}"
+
+          # Path to a YAML configuration file for this Action that is stored in
+          # this repository.
+          #
+          # This input defaults to "", which instructs the Action to use the
+          # built-in default configuration.
+          configuration-file-path: ".github/workflows/sizeup/config.yaml"
 ```
+
+This will use `sizeup` to estimate the reviewability of any pull request opened on your repository using a YAML configuration file found at `.github/workflows/sizeup/config.yaml`. The format of the configuration file is described below.
 
 ## Configuration
 

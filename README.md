@@ -143,7 +143,7 @@ This section contains notes for how to develop this library.
 
 ### Building the distributed code for this Action
 
-As is common for Actions, this repository contains the distributed code for this Action in the [`dist`](./dist/) directory. As a result, any change to a file in [`src`](./src/) must also be accompanied by manual compilation. This should be done with the following command:
+As is common for Actions, this repository contains the distributed code for this Action in the [`dist`](./dist/) directory. As a result, any change to a file in [`src`](./src/) or to [`package.json`](./package.json) must also be accompanied by manual compilation. This should be done with the following command:
 
 ```sh
 npm run all

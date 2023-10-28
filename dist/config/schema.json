@@ -13,6 +13,11 @@
                     "type": "boolean",
                     "default": true
                 },
+                "excludeDraftPullRequests": {
+                    "description": "Whether or not to skip applying the category label to a draft pull request",
+                    "type": "boolean",
+                    "default": false
+                },
                 "categoryLabelPrefix": {
                     "description": "The prefix to add to each category label that we apply",
                     "type": "string",
@@ -26,6 +31,11 @@
             "properties": {
                 "addCommentWhenScoreThresholdHasBeenExceeded": {
                     "description": "Whether or not to add a comment to each assessed pull request that exceeds the configured score threshold",
+                    "type": "boolean",
+                    "default": true
+                },
+                "excludeDraftPullRequests": {
+                    "description": "Whether or not to skip commenting on a draft pull request that exceeds the configured score threshold",
                     "type": "boolean",
                     "default": true
                 },

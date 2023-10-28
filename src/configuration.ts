@@ -17,6 +17,10 @@ export interface Configuration {
      */
     applyCategoryLabels?: boolean
     /**
+     * Whether or not to skip applying the category label to a draft pull request
+     */
+    excludeDraftPullRequests?: boolean
+    /**
      * The prefix to add to each category label that we apply
      */
     categoryLabelPrefix?: string
@@ -29,6 +33,10 @@ export interface Configuration {
      * Whether or not to add a comment to each assessed pull request that exceeds the configured score threshold
      */
     addCommentWhenScoreThresholdHasBeenExceeded?: boolean
+    /**
+     * Whether or not to skip commenting on a draft pull request that exceeds the configured score threshold
+     */
+    excludeDraftPullRequests?: boolean
     /**
      * The score above which this tool will post a comment on the pull request.
      */

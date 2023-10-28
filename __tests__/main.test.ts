@@ -8,10 +8,10 @@
 
 import * as core from '@actions/core'
 import * as main from '../src/main'
+import * as initializer from '../src/initializer'
 import * as github from '@actions/github'
-import { Label } from '@octokit/webhooks-types' // eslint-disable-line import/no-unresolved
 
-function pullRequestEventContext(labels: Label[] = []): object {
+function pullRequestEventContext(overrides = {}): object {
   return {
     eventName: 'pull_request',
     payload: {
@@ -24,35 +24,68 @@ function pullRequestEventContext(labels: Label[] = []): object {
             }
           }
         },
-        labels,
+        labels: [],
         number: 1,
         user: {
           login: 'lerebear'
-        }
+        },
+        ...overrides
       }
     }
   }
 }
 
 describe('action', () => {
-  // Mock the GitHub Actions core library
-  const getInputMock = jest.spyOn(core, 'getInput')
-  const octokitMock = jest.spyOn(github, 'getOctokit')
+  // Mock Octokit so that by default it return a small diff and allow an existing label to be applied.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  jest.spyOn(github, 'getOctokit').mockImplementation((token: string): any => {
+    if (token === 'xxx') {
+      return {
+        rest: {
+          pulls: {
+            get: () => {
+              return {
+                data: '--- README.md	2023-10-16 16:35:38\n+++ README-AGAIN.md	2023-10-16 16:36:07\n@@ -0,0 +1 @@\n+# Hello, World!'
+              }
+            }
+          },
+          issues: {
+            getLabel: () => {},
+            addLabels: () => {}
+          }
+        }
+      }
+    }
+  })
+  const loadConfigurationMock = jest
+    .spyOn(initializer, 'loadConfiguration')
+    .mockImplementation(() => ({
+      commenting: { excludeDraftPullRequests: true }
+    }))
   const setOutputMock = jest
     .spyOn(core, 'setOutput')
     .mockImplementation(() => {})
   const setFailedMock = jest
     .spyOn(core, 'setFailed')
     .mockImplementation(() => {})
-
-  // Suppress log statements
-  jest.spyOn(core, 'info').mockImplementation(() => {})
+  const infoMock = jest.spyOn(core, 'info').mockImplementation(() => {})
 
   // Mock the action's main function
   const runMock = jest.spyOn(main, 'run')
 
   // Shallow clone original @actions/github context
   const originalContext = { ...github.context }
+
+  // Mock core.getInput() such that we verify that we retrieve the auth token
+  // from the right input variable.
+  jest.spyOn(core, 'getInput').mockImplementation((name: string): string => {
+    switch (name) {
+      case 'token':
+        return 'xxx'
+      default:
+        return ''
+    }
+  })
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -69,38 +102,48 @@ describe('action', () => {
       value: pullRequestEventContext()
     })
 
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation((name: string): string => {
-      switch (name) {
-        case 'token':
-          return 'xxx'
-        case 'configuration-file-path':
-          return '__tests__/test-configuration.yaml'
-        default:
-          return ''
-      }
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'score', 1)
+    expect(setOutputMock).toHaveBeenNthCalledWith(2, 'category', 'extra small')
+  })
+
+  it('skips labelling a draft pull request when configured to do so', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext({ draft: true })
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    octokitMock.mockImplementation((token: string): any => {
-      if (token === 'xxx') {
-        return {
-          rest: {
-            pulls: {
-              get: () => {
-                return { data: '' }
-              }
-            }
-          }
-        }
-      }
-    })
+    loadConfigurationMock.mockImplementation(() => ({
+      labeling: { excludeDraftPullRequests: true }
+    }))
 
     await main.run()
 
     expect(runMock).toHaveReturned()
-    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'score', 0)
-    expect(setOutputMock).toHaveBeenNthCalledWith(2, 'category', 'extra small')
+    expect(infoMock).toHaveBeenCalledWith(
+      'Skipping labeling of a draft pull request'
+    )
+  })
+
+  it('skips commenting on a draft pull request when configured to do so', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext({ draft: true })
+    })
+
+    loadConfigurationMock.mockImplementation(() => ({
+      commenting: { scoreThreshold: 0 }
+    }))
+
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(infoMock).toHaveBeenCalledWith(
+      'Skipping commenting on a draft pull request'
+    )
   })
 
   it('sets a failed status when invoked for the wrong event', async () => {

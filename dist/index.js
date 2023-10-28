@@ -10529,6 +10529,62 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 9477:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.loadConfiguration = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const fs = __importStar(__nccwpck_require__(7147));
+const path = __importStar(__nccwpck_require__(1017));
+const YAML = __importStar(__nccwpck_require__(4083));
+/**
+ * Loads either the configuration file provided to the workflow, or the default
+ * configuration file from "./config/default.yaml".
+ *
+ * @returns The configuration for this workflow run
+ */
+function loadConfiguration() {
+    let configFile = core.getInput('configuration-file-path');
+    if (configFile) {
+        core.info(`Reading sizeup configuration from ${configFile}`);
+    }
+    else {
+        core.info('Using default sizeup configuration');
+        configFile = path.resolve(__dirname, './config/default.yaml');
+    }
+    return YAML.parse(fs.readFileSync(configFile, 'utf8'));
+}
+exports.loadConfiguration = loadConfiguration;
+
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -10565,6 +10621,7 @@ const sizeup_core_1 = __nccwpck_require__(4296);
 const YAML = __importStar(__nccwpck_require__(4083));
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
+const initializer_1 = __nccwpck_require__(9477);
 const DEFAULT_LABEL_PREFIX = 'sizeup/';
 const DEFAULT_COMMENT_TEMPLATE = `
 👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
@@ -10587,7 +10644,7 @@ async function run() {
             return;
         }
         const pullRequest = github.context.payload.pull_request;
-        const config = loadConfiguration();
+        const config = (0, initializer_1.loadConfiguration)();
         const usersWhoHaveOptedin = config.optIns || [];
         if (usersWhoHaveOptedin.length &&
             !usersWhoHaveOptedin.find((login) => login === pullRequest.user.login)) {
@@ -10604,23 +10661,6 @@ async function run() {
     }
 }
 exports.run = run;
-/**
- * Loads either the configuration file provided to the workflow, or the default
- * configuration file from "./config/default.yaml".
- *
- * @returns The configuration for this workflow run
- */
-function loadConfiguration() {
-    let configFile = core.getInput('configuration-file-path');
-    if (configFile) {
-        core.info(`Reading sizeup configuration from ${configFile}`);
-    }
-    else {
-        core.info('Using default sizeup configuration');
-        configFile = path.resolve(__dirname, './config/default.yaml');
-    }
-    return YAML.parse(fs.readFileSync(configFile, 'utf8'));
-}
 /**
  * Uses the `sizeup` library to evalute the given pull request for reviewability
  *
@@ -10668,6 +10708,11 @@ async function evaluatePullRequest(pull, config) {
 async function applyCategoryLabel(pull, score, config) {
     if (!score.category?.label) {
         core.info('Skipping labeling because no category label was provided');
+        return;
+    }
+    if (pull.draft &&
+        configOrDefault(config.labeling?.excludeDraftPullRequests, false)) {
+        core.info('Skipping labeling of a draft pull request');
         return;
     }
     await ensureLabelExists(pull, score, config);
@@ -10780,6 +10825,11 @@ async function addScoreThresholdExceededComment(pull, score, config) {
     const threshold = configOrDefault(config.commenting?.scoreThreshold, DEFAULT_SCORE_THRESHOLD);
     if (score.result <= threshold)
         return;
+    if (pull.draft &&
+        configOrDefault(config.commenting?.excludeDraftPullRequests, true)) {
+        core.info('Skipping commenting on a draft pull request');
+        return;
+    }
     const commentTemplate = config.commenting?.commentTemplate !== undefined
         ? config.commenting?.commentTemplate
         : DEFAULT_COMMENT_TEMPLATE;

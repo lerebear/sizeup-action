@@ -4,7 +4,7 @@ This repository contains a GitHub Action that wraps the [`sizeup` library](https
 
 ## Usage
 
-[Create an Actions workflow](https://docs.github.com/en/actions/quickstart) in this repository (e.g. `.github/workflows/sizeup.yaml`) with the following contents:
+[Create an Actions workflow](https://docs.github.com/en/actions/quickstart) in your desired repository (e.g. `.github/workflows/sizeup.yaml`) with the following contents:
 
 ```yaml
 name: SizeUp

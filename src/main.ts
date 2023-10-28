@@ -6,6 +6,7 @@ import * as YAML from 'yaml'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Configuration } from './configuration'
+import { loadConfiguration } from './initializer'
 
 const DEFAULT_LABEL_PREFIX = 'sizeup/'
 const DEFAULT_COMMENT_TEMPLATE = `
@@ -54,25 +55,6 @@ export async function run(): Promise<void> {
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
-}
-
-/**
- * Loads either the configuration file provided to the workflow, or the default
- * configuration file from "./config/default.yaml".
- *
- * @returns The configuration for this workflow run
- */
-function loadConfiguration(): Configuration {
-  let configFile = core.getInput('configuration-file-path')
-
-  if (configFile) {
-    core.info(`Reading sizeup configuration from ${configFile}`)
-  } else {
-    core.info('Using default sizeup configuration')
-    configFile = path.resolve(__dirname, './config/default.yaml')
-  }
-
-  return YAML.parse(fs.readFileSync(configFile, 'utf8')) as Configuration
 }
 
 /**
@@ -142,6 +124,14 @@ async function applyCategoryLabel(
 ): Promise<void> {
   if (!score.category?.label) {
     core.info('Skipping labeling because no category label was provided')
+    return
+  }
+
+  if (
+    pull.draft &&
+    configOrDefault(config.labeling?.excludeDraftPullRequests, false)
+  ) {
+    core.info('Skipping labeling of a draft pull request')
     return
   }
 
@@ -280,6 +270,14 @@ async function addScoreThresholdExceededComment(
     DEFAULT_SCORE_THRESHOLD
   )
   if (score.result! <= threshold) return
+
+  if (
+    pull.draft &&
+    configOrDefault(config.commenting?.excludeDraftPullRequests, true)
+  ) {
+    core.info('Skipping commenting on a draft pull request')
+    return
+  }
 
   const commentTemplate =
     config.commenting?.commentTemplate !== undefined

@@ -1,6 +1,6 @@
 {
   "name": "sizeup-action",
-  "description": "GitHub Actions wrapper for the sizeup library",
+  "description": "Encourage digestible pull requests",
   "version": "0.3.1",
   "author": "Ọlálérè Williams",
   "private": true,

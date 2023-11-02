@@ -1,6 +1,11 @@
 # SizeUp Action
 
-This repository contains a GitHub Action that wraps the [`sizeup` library](https://github.com/lerebear/sizeup-core) in order to provide a way to estimate the reviewability of a pull request as it goes through its lifecycle on GitHub.
+This GitHub Action helps you encourage your contributors to open pull requests that will be easy to digest by reviewers. It does this by providing two  features:
+
+* Automatic labeling of pull requests with a size category.
+* Automatic commenting on pull requests that exceed a certain size threshold.
+
+All aspects of this Action are [configurable](#configuration), including how sizes are calculated, what thresholds to use for each size category, and whether or not to actually perform the above automations or only to log them.
 
 ## Usage
 

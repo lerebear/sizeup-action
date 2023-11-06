@@ -44,7 +44,8 @@ export async function run(): Promise<void> {
       )
     ) {
       core.info(
-        'Skipping evaluation because pull request author has not opted into this workflow'
+        `Skipping evaluation because pull request author @${pullRequest.user.login} has not opted` +
+          ' into this workflow'
       )
       return
     }

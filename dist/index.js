@@ -10652,7 +10652,8 @@ async function run() {
         const usersWhoHaveOptedin = config.optIns || [];
         if (usersWhoHaveOptedin.length &&
             !usersWhoHaveOptedin.find((login) => login === pullRequest.user.login)) {
-            core.info('Skipping evaluation because pull request author has not opted into this workflow');
+            core.info(`Skipping evaluation because pull request author @${pullRequest.user.login} has not opted` +
+                ' into this workflow');
             return;
         }
         const score = await evaluatePullRequest(pullRequest, config);

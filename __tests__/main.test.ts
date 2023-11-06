@@ -105,6 +105,7 @@ describe('action', () => {
     await main.run()
 
     expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
     expect(setOutputMock).toHaveBeenNthCalledWith(1, 'score', 1)
     expect(setOutputMock).toHaveBeenNthCalledWith(2, 'category', 'extra small')
   })
@@ -122,6 +123,7 @@ describe('action', () => {
     await main.run()
 
     expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
     expect(infoMock).toHaveBeenCalledWith(
       'Skipping labeling of a draft pull request'
     )
@@ -143,6 +145,47 @@ describe('action', () => {
     expect(setFailedMock).not.toHaveBeenCalled()
     expect(infoMock).toHaveBeenCalledWith(
       'Skipping commenting on a draft pull request'
+    )
+  })
+
+  it('runs the workflow sucessfully when optIns configuration is present and the pull request author is in it', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext()
+    })
+
+    loadConfigurationMock.mockImplementation(() => ({
+      // Mock config such that the only opted-in user is @glortho. The pull request will be created
+      // by @lerebear, who should therefore not be considered optedpin.
+      optIns: ['lerebear']
+    }))
+
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'score', 1)
+    expect(setOutputMock).toHaveBeenNthCalledWith(2, 'category', 'extra small')
+  })
+
+  it('skips the workflow entirely when the pull request author has not opted into it', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext()
+    })
+
+    loadConfigurationMock.mockImplementation(() => ({
+      // Mock config such that the only opted-in user is @glortho. The pull request will be created
+      // by @lerebear, who should therefore not be considered optedpin.
+      optIns: ['glortho']
+    }))
+
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(infoMock).toHaveBeenCalledWith(
+      'Skipping evaluation because pull request author @lerebear has not opted into this workflow'
     )
   })
 

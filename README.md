@@ -125,7 +125,7 @@ sizeup:
         color: a14c05
     - name: extra large
       label:
-        name: sl
+        name: xl
         color: c32607
   ignoredFilePatterns:
     - CODEOWNERS

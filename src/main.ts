@@ -6,7 +6,7 @@ import * as YAML from 'yaml'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Configuration } from './configuration'
-import { loadConfiguration } from './initializer'
+import { fetchDiff, loadConfiguration } from './initializer'
 
 const DEFAULT_LABEL_PREFIX = 'sizeup/'
 const DEFAULT_COMMENT_TEMPLATE = `
@@ -75,16 +75,6 @@ async function evaluatePullRequest(
   const pullRequestNickname = `${pull.base.repo.owner.login}/${pull.base.repo.name}#${pull.number}`
   core.info(`Evaluating pull request ${pullRequestNickname}`)
 
-  const octokit = github.getOctokit(core.getInput('token'))
-  const diff = (
-    await octokit.rest.pulls.get({
-      owner: pull.base.repo.owner.login,
-      repo: pull.base.repo.name,
-      pull_number: pull.number,
-      mediaType: { format: 'diff' }
-    })
-  ).data as unknown as string
-
   let sizeupConfigFile = undefined
   if (config.sizeup) {
     sizeupConfigFile = path.resolve(__dirname, './tmp/sizeup.yaml')
@@ -92,6 +82,7 @@ async function evaluatePullRequest(
     fs.writeFileSync(sizeupConfigFile, YAML.stringify(config.sizeup))
   }
 
+  const diff = await fetchDiff(pull)
   const score = SizeUp.evaluate(diff, sizeupConfigFile)
 
   if (sizeupConfigFile) {

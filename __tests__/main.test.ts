@@ -42,13 +42,6 @@ describe('action', () => {
     if (token === 'xxx') {
       return {
         rest: {
-          pulls: {
-            get: () => {
-              return {
-                data: '--- README.md	2023-10-16 16:35:38\n+++ README-AGAIN.md	2023-10-16 16:36:07\n@@ -0,0 +1 @@\n+# Hello, World!'
-              }
-            }
-          },
           issues: {
             getLabel: () => {},
             addLabels: () => {}
@@ -75,6 +68,15 @@ describe('action', () => {
 
   // Shallow clone original @actions/github context
   const originalContext = { ...github.context }
+
+  // Mock the diff that we use for evaluation.
+  jest
+    .spyOn(initializer, 'fetchDiff')
+    .mockImplementation(async () =>
+      Promise.resolve(
+        '--- README.md	2023-10-16 16:35:38\n+++ README-AGAIN.md	2023-10-16 16:36:07\n@@ -0,0 +1 @@\n+# Hello, World!'
+      )
+    )
 
   // Mock core.getInput() such that we verify that we retrieve the auth token
   // from the right input variable.

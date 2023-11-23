@@ -27,10 +27,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out a copy of this repository so we can load the configuration
-      # file for Action later on.
+      # Set the checkout depth to use in the next step.
+      # This step must be included in order for the diff that we evaluate to be
+      # computed correctly.
+      - name: 'Set checkout depth to include base commit'
+        id: 'set-checkout-depth'
+        run: echo "depth=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "$GITHUB_OUTPUT"
+
+      # Check out a copy of this repository so that we can compute a diff to
+      # evaluate and load the Action's configuration.
       - name: Checkout this repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: "${{ steps.set-checkout-depth.outputs.depth }}"
 
       # Run the estimation tool
       - name: Run sizeup
@@ -48,6 +57,13 @@ jobs:
           #
           # This input is required.
           token: "${{ secrets.GITHUB_TOKEN }}"
+
+          # Options that will be forwarded to `git diff` when computing the diff to evaluate with this Action.
+          #
+          # Defaults to "--ignore-space-change", which ignores lines of the
+          # diff in which the only change is to the amount of whitespace on the
+          # line.
+          git-diff-args: "--ignore-space-change"
 
           # Path to a YAML configuration file for this Action that is stored in
           # this repository.

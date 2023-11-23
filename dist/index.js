@@ -6735,8 +6735,8 @@ class Comments extends feature_1.default {
                 if (["del", "normal"].includes(change.type)) {
                     continue;
                 }
-                const line = change.content.substring(1).trimStart();
-                if (line.startsWith(file.language.lineCommentStyle.start)) {
+                const line = change.content.substring(1).trim();
+                if (file.language.lineCommentStyle && line.startsWith(file.language.lineCommentStyle.start)) {
                     sum++;
                     blockCommentLines = 0;
                 }
@@ -6747,7 +6747,7 @@ class Comments extends feature_1.default {
                 else if (file.language.blockCommentStyle && line.startsWith(file.language.blockCommentStyle.start)) {
                     blockCommentLines++;
                 }
-                else if (file.language.blockCommentStyle && blockCommentLines > 0 && line.startsWith(file.language.blockCommentStyle.end)) {
+                else if (file.language.blockCommentStyle && blockCommentLines > 0 && line.endsWith(file.language.blockCommentStyle.end)) {
                     // We must check for block comment end _before_ we check for block comment continuation,
                     // because the block comment continuation is frequently a substring of the block comment
                     // end (e.g. in languages with C-style comments, "*" is a substring of "*/")
@@ -6968,12 +6968,12 @@ exports.Formula = Formula;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Linguist = void 0;
+exports.SUPPORTED_LANGUAGES = exports.YAML = exports.XML = exports.TypeScript = exports.Swift = exports.Rust = exports.Ruby = exports.Python = exports.Kotlin = exports.JavaScript = exports.Java = exports.HTML = exports.Go = exports.CSharp = exports.CommentStyleFamily = exports.Linguist = void 0;
 /** A utility class for language-specific behaviour. */
 class Linguist {
     /** Tries to match the given filename to a supported language based on its file extension. */
     static detect(filename) {
-        for (const language of SUPPORTED_LANGUAGES) {
+        for (const language of exports.SUPPORTED_LANGUAGES) {
             if (language.fileExtensions.filter((ext) => filename.endsWith(`.${ext}`)).length > 0) {
                 return language;
             }
@@ -6981,27 +6981,101 @@ class Linguist {
     }
 }
 exports.Linguist = Linguist;
-const Ruby = {
-    name: "Ruby",
-    fileExtensions: ["rb"],
-    lineCommentStyle: { start: "#" }
-};
-const TypeScript = {
-    name: "TypeScript",
-    fileExtensions: ["ts", "tsx"],
-    lineCommentStyle: { start: "//" },
-    blockCommentStyle: { start: "/*", continuation: "*", end: "*/" }
-};
-const JavaScript = {
-    name: "JavaScript",
-    fileExtensions: ["js", "jsx"],
+var CommentStyleFamily;
+(function (CommentStyleFamily) {
+    CommentStyleFamily["C"] = "c";
+    CommentStyleFamily["HTML"] = "html";
+    CommentStyleFamily["Python"] = "python";
+})(CommentStyleFamily || (exports.CommentStyleFamily = CommentStyleFamily = {}));
+const cStyleComments = {
     lineCommentStyle: { start: "//" },
     blockCommentStyle: { start: "/*", continuation: "*", end: "*/" },
 };
-const SUPPORTED_LANGUAGES = [
-    Ruby,
-    TypeScript,
-    JavaScript,
+const htmlStyleComments = {
+    blockCommentStyle: { start: "<!--", continuation: "", end: "-->" },
+};
+const pythonStyleComments = {
+    lineCommentStyle: { start: "#" },
+};
+exports.CSharp = {
+    name: "C#",
+    fileExtensions: ["cs", "csx"],
+    ...cStyleComments,
+};
+exports.Go = {
+    name: "Go",
+    fileExtensions: ["go"],
+    ...cStyleComments,
+};
+exports.HTML = {
+    name: "HTML",
+    fileExtensions: ["htm", "html"],
+    ...htmlStyleComments,
+};
+exports.Java = {
+    name: "Java",
+    fileExtensions: ["java"],
+    ...cStyleComments,
+};
+exports.JavaScript = {
+    name: "JavaScript",
+    fileExtensions: ["js", "jsx"],
+    ...cStyleComments,
+};
+exports.Kotlin = {
+    name: "Kotlin",
+    fileExtensions: ["kt", "kts"],
+    ...cStyleComments,
+};
+exports.Python = {
+    name: "Python",
+    fileExtensions: ["py"],
+    ...pythonStyleComments,
+};
+exports.Ruby = {
+    name: "Ruby",
+    fileExtensions: ["rb"],
+    ...pythonStyleComments,
+};
+exports.Rust = {
+    name: "Rust",
+    fileExtensions: ["rs"],
+    ...cStyleComments,
+};
+exports.Swift = {
+    name: "Swift",
+    fileExtensions: ["swift"],
+    ...cStyleComments,
+};
+exports.TypeScript = {
+    name: "TypeScript",
+    fileExtensions: ["ts", "tsx"],
+    ...cStyleComments,
+};
+exports.XML = {
+    name: "XML",
+    fileExtensions: ["xml"],
+    ...htmlStyleComments,
+};
+exports.YAML = {
+    name: "YAML",
+    fileExtensions: ["yml", "yaml"],
+    ...pythonStyleComments,
+};
+exports.SUPPORTED_LANGUAGES = [
+    exports.CSharp,
+    exports.Go,
+    exports.HTML,
+    exports.Java,
+    exports.JavaScript,
+    exports.Kotlin,
+    exports.Python,
+    exports.Ruby,
+    exports.Rust,
+    exports.Swift,
+    exports.TypeScript,
+    exports.XML,
+    exports.YAML,
 ];
 
 

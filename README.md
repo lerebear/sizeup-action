@@ -58,12 +58,13 @@ jobs:
           # This input is required.
           token: "${{ secrets.GITHUB_TOKEN }}"
 
-          # Options that will be forwarded to `git diff` when computing the diff to evaluate with this Action.
+          # Optional arguments that will be forwarded to `git diff` when
+          # computing the diff to evaluate with this Action.
           #
           # Defaults to "--ignore-space-change", which ignores lines of the
           # diff in which the only change is to the amount of whitespace on the
           # line.
-          git-diff-args: "--ignore-space-change"
+          git-diff-args: ""
 
           # Path to a YAML configuration file for this Action that is stored in
           # this repository.

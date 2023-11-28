@@ -12427,7 +12427,7 @@ exports.Formula = Formula;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SUPPORTED_LANGUAGES = exports.YAML = exports.XML = exports.TypeScript = exports.Swift = exports.Rust = exports.Ruby = exports.Python = exports.Kotlin = exports.JavaScript = exports.Java = exports.HTML = exports.Go = exports.CSharp = exports.CommentStyleFamily = exports.Linguist = void 0;
+exports.SUPPORTED_LANGUAGES = exports.YAML = exports.XML = exports.TypeScript = exports.Swift = exports.StringsDict = exports.Strings = exports.Rust = exports.Ruby = exports.Python = exports.Kotlin = exports.JavaScript = exports.Java = exports.HTML = exports.Go = exports.CSharp = exports.CommentStyleFamily = exports.Linguist = void 0;
 /** A utility class for language-specific behaviour. */
 class Linguist {
     /** Tries to match the given filename to a supported language based on its file extension. */
@@ -12501,6 +12501,16 @@ exports.Rust = {
     fileExtensions: ["rs"],
     ...cStyleComments,
 };
+exports.Strings = {
+    name: "Strings",
+    fileExtensions: ["strings"],
+    ...cStyleComments,
+};
+exports.StringsDict = {
+    name: "StringsDict",
+    fileExtensions: ["stringsdict"],
+    ...htmlStyleComments,
+};
 exports.Swift = {
     name: "Swift",
     fileExtensions: ["swift"],
@@ -12531,6 +12541,8 @@ exports.SUPPORTED_LANGUAGES = [
     exports.Python,
     exports.Ruby,
     exports.Rust,
+    exports.Strings,
+    exports.StringsDict,
     exports.Swift,
     exports.TypeScript,
     exports.XML,

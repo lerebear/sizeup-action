@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import * as github from '@actions/github'
 import { Configuration } from './configuration'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -39,4 +40,38 @@ export async function fetchDiff(pull: PullRequest): Promise<string> {
   )
   core.info(`Retrieving diff with \`git diff ${diffArgs.join(' ')}\``)
   return git.diff(diffArgs)
+}
+
+export function workflowTriggeredForUnsupportedEvent(): boolean {
+  if (github.context.eventName !== 'pull_request') {
+    core.setFailed(
+      "This action is only supported on the 'pull_request' event, " +
+        `but it was triggered for '${github.context.eventName}'`
+    )
+    return true
+  }
+
+  return false
+}
+
+export function pullRequestAuthorHasNotOptedIn(
+  config: Configuration,
+  pullRequest: PullRequest
+): boolean {
+  const usersWhoHaveOptedin = config.optIns || []
+
+  if (
+    usersWhoHaveOptedin.length &&
+    !usersWhoHaveOptedin.find(
+      (login: string) => login === pullRequest.user.login
+    )
+  ) {
+    core.info(
+      `Skipping evaluation because pull request author @${pullRequest.user.login} has not opted` +
+        ' into this workflow'
+    )
+    return true
+  }
+
+  return false
 }

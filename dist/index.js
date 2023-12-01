@@ -16250,8 +16250,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fetchDiff = exports.loadConfiguration = void 0;
+exports.pullRequestAuthorHasNotOptedIn = exports.workflowTriggeredForUnsupportedEvent = exports.fetchDiff = exports.loadConfiguration = void 0;
 const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
 const YAML = __importStar(__nccwpck_require__(4083));
@@ -16288,6 +16289,26 @@ async function fetchDiff(pull) {
     return git.diff(diffArgs);
 }
 exports.fetchDiff = fetchDiff;
+function workflowTriggeredForUnsupportedEvent() {
+    if (github.context.eventName !== 'pull_request') {
+        core.setFailed("This action is only supported on the 'pull_request' event, " +
+            `but it was triggered for '${github.context.eventName}'`);
+        return true;
+    }
+    return false;
+}
+exports.workflowTriggeredForUnsupportedEvent = workflowTriggeredForUnsupportedEvent;
+function pullRequestAuthorHasNotOptedIn(config, pullRequest) {
+    const usersWhoHaveOptedin = config.optIns || [];
+    if (usersWhoHaveOptedin.length &&
+        !usersWhoHaveOptedin.find((login) => login === pullRequest.user.login)) {
+        core.info(`Skipping evaluation because pull request author @${pullRequest.user.login} has not opted` +
+            ' into this workflow');
+        return true;
+    }
+    return false;
+}
+exports.pullRequestAuthorHasNotOptedIn = pullRequestAuthorHasNotOptedIn;
 
 
 /***/ }),
@@ -16345,20 +16366,12 @@ const DEFAULT_SCORE_THRESHOLD = 100;
  */
 async function run() {
     try {
-        if (github.context.eventName !== 'pull_request') {
-            core.setFailed("This action is only supported on the 'pull_request' event, " +
-                `but it was triggered for '${github.context.eventName}'`);
+        if ((0, initializer_1.workflowTriggeredForUnsupportedEvent)())
             return;
-        }
-        const pullRequest = github.context.payload.pull_request;
         const config = (0, initializer_1.loadConfiguration)();
-        const usersWhoHaveOptedin = config.optIns || [];
-        if (usersWhoHaveOptedin.length &&
-            !usersWhoHaveOptedin.find((login) => login === pullRequest.user.login)) {
-            core.info(`Skipping evaluation because pull request author @${pullRequest.user.login} has not opted` +
-                ' into this workflow');
+        const pullRequest = github.context.payload.pull_request;
+        if ((0, initializer_1.pullRequestAuthorHasNotOptedIn)(config, pullRequest))
             return;
-        }
         const score = await evaluatePullRequest(pullRequest, config);
         await applyCategoryLabel(pullRequest, score, config);
         await addScoreThresholdExceededComment(pullRequest, score, config);

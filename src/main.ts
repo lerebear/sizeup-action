@@ -6,7 +6,12 @@ import * as YAML from 'yaml'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Configuration } from './configuration'
-import { fetchDiff, loadConfiguration } from './initializer'
+import {
+  fetchDiff,
+  loadConfiguration,
+  pullRequestAuthorHasNotOptedIn,
+  workflowTriggeredForUnsupportedEvent
+} from './initializer'
 
 const DEFAULT_LABEL_PREFIX = 'sizeup/'
 const DEFAULT_COMMENT_TEMPLATE = `
@@ -25,32 +30,15 @@ const DEFAULT_SCORE_THRESHOLD = 100
  */
 export async function run(): Promise<void> {
   try {
-    if (github.context.eventName !== 'pull_request') {
-      core.setFailed(
-        "This action is only supported on the 'pull_request' event, " +
-          `but it was triggered for '${github.context.eventName}'`
-      )
-      return
-    }
+    if (workflowTriggeredForUnsupportedEvent()) return
 
-    const pullRequest = github.context.payload.pull_request as PullRequest
     const config = loadConfiguration()
+    const pullRequest = github.context.payload.pull_request as PullRequest
 
-    const usersWhoHaveOptedin = config.optIns || []
-    if (
-      usersWhoHaveOptedin.length &&
-      !usersWhoHaveOptedin.find(
-        (login: string) => login === pullRequest.user.login
-      )
-    ) {
-      core.info(
-        `Skipping evaluation because pull request author @${pullRequest.user.login} has not opted` +
-          ' into this workflow'
-      )
-      return
-    }
+    if (pullRequestAuthorHasNotOptedIn(config, pullRequest)) return
 
     const score = await evaluatePullRequest(pullRequest, config)
+
     await applyCategoryLabel(pullRequest, score, config)
     await addScoreThresholdExceededComment(pullRequest, score, config)
   } catch (error) {

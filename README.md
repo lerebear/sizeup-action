@@ -27,19 +27,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Set the checkout depth to use in the next step.
-      # This step must be included in order for the diff that we evaluate to be
-      # computed correctly.
-      - name: 'Set checkout depth to include base commit'
-        id: 'set-checkout-depth'
-        run: echo "depth=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "$GITHUB_OUTPUT"
-
       # Check out a copy of this repository so that we can compute a diff to
       # evaluate and load the Action's configuration.
       - name: Checkout this repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: "${{ steps.set-checkout-depth.outputs.depth }}"
+        uses: actions/checkout@v4
 
       # Run the estimation tool
       - name: Run sizeup

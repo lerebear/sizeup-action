@@ -35,7 +35,7 @@ jobs:
       # Run the estimation tool
       - name: Run sizeup
         # TODO: Replace the version below with your desired version.
-        uses: lerebear/sizeup-action@v0.4.0
+        uses: lerebear/sizeup-action@v0.4.2
         id: sizeup-action
 
         with:

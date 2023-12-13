@@ -49,7 +49,7 @@ export async function fetchDiff(pull: PullRequest): Promise<string> {
   core.info(`Retrieving diff with \`git diff ${diffArgs.join(' ')}\``)
 
   // Fetch all commits for the head branch back to where it diverged from the base.
-  core.debug(`Fetching ${pull.commits + 1} for ${headRefspec}`)
+  core.debug(`Fetching ${pull.commits + 1} commits for ${headRefspec}`)
   await git.fetch([
     'origin',
     headRefspec,
@@ -79,7 +79,7 @@ export async function fetchDiff(pull: PullRequest): Promise<string> {
 
   // Fetch commits for the base branch that were made since the head diverged from it.
   core.debug(
-    `Retrieving history for ${baseRefspec} since ${commonAncestorCommittedAt}`
+    `Retrieving history for ${baseRefspec} since ${commonAncestor} which was committed at ${commonAncestorCommittedAt}`
   )
   await git.fetch([
     'origin',

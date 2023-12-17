@@ -12336,10 +12336,13 @@ const operators_1 = __nccwpck_require__(9996);
 const registry_1 = __nccwpck_require__(3351);
 const score_1 = __nccwpck_require__(436);
 const NUMERIC_CONSTANT_RE = /-?\d+(\.\d+)?/;
+const ALIAS_RE = /^[\w][\w-]*$/;
 /** Represents a mathematical expression that we use to evaluate a Changeset. */
 class Formula {
-    constructor(expression) {
+    constructor(expression, aliases = new Map(), cache = new Map()) {
         this.expression = expression;
+        this.aliases = aliases;
+        this.cache = cache;
     }
     /**
      *
@@ -12355,18 +12358,23 @@ class Formula {
             const tokenPosition = tokens.length;
             const token = tokens.pop();
             const operator = this.toOperator(token);
-            if (!this.isSupportedToken(token)) {
-                result.addError({
-                    message: (`Formula contains unsupported token: ${token}`),
-                    tokenPosition
-                });
+            if (!this.isValidToken(token, tokenPosition, result)) {
                 return result;
             }
-            if (this.isFeature(token)) {
+            if (this.cache.has(token)) {
+                stack.push(this.cache.get(token));
+            }
+            else if (this.isAlias(token)) {
+                const aliasFormula = new Formula(this.aliases.get(token), this.aliases, this.cache);
+                stack.push(aliasFormula.evaluate(changeset).result);
+            }
+            else if (this.isFeature(token)) {
                 const FeatureClass = registry_1.FeatureRegistry.get(token);
                 const feature = new FeatureClass(changeset);
                 const value = feature.evaluate();
-                result.recordVariableSubstitution(FeatureClass.variableName(), value);
+                const variableName = FeatureClass.variableName();
+                result.recordVariableSubstitution(variableName, value);
+                this.cache.set(variableName, value);
                 stack.push(value);
             }
             else if (this.isNumericConstant(token)) {
@@ -12393,6 +12401,30 @@ class Formula {
         Math.round((stack[0] + Number.EPSILON) * 100) / 100, categories);
         return result;
     }
+    isValidToken(token, position, result) {
+        if (!this.isSupportedToken(token)) {
+            result.addError({
+                message: (`Formula contains unsupported token: ${token}`),
+                tokenPosition: position
+            });
+            return false;
+        }
+        if (this.isAlias(token) && this.isFeature(token)) {
+            result.addError({
+                message: `Alias must not share a name with a feature: ${token}`,
+                tokenPosition: position
+            });
+            return false;
+        }
+        if (this.isAlias(token) && !token.match(ALIAS_RE)) {
+            result.addError({
+                message: `Alias does not match ${ALIAS_RE}: ${token}`,
+                tokenPosition: position
+            });
+            return false;
+        }
+        return true;
+    }
     isSupportedToken(token) {
         return this.isOperator(token) || this.isOperand(token);
     }
@@ -12407,7 +12439,10 @@ class Formula {
         }
     }
     isOperand(token) {
-        return this.isFeature(token) || this.isNumericConstant(token);
+        return this.isAlias(token) || this.isFeature(token) || this.isNumericConstant(token);
+    }
+    isAlias(token) {
+        return this.aliases.has(token);
     }
     isFeature(token) {
         return registry_1.FeatureRegistry.has(token);
@@ -12563,22 +12598,84 @@ exports.SUPPORTED_OPERATORS = [
     {
         symbol: "+",
         arity: 2,
-        apply: (...operands) => operands[0] + operands[1]
+        apply: (a, b) => a + b
     },
     {
         symbol: "-",
         arity: 2,
-        apply: (...operands) => operands[0] - operands[1]
+        apply: (a, b) => a - b
     },
     {
         symbol: "*",
         arity: 2,
-        apply: (...operands) => operands[0] * operands[1]
+        apply: (a, b) => a * b
     },
     {
         symbol: "/",
         arity: 2,
-        apply: (...operands) => operands[0] / operands[1]
+        apply: (a, b) => {
+            if (b == 0) {
+                throw new Error("Cannot divide by zero");
+            }
+            return a / b;
+        }
+    },
+    {
+        symbol: "^",
+        arity: 2,
+        apply: (a, b) => a ** b
+    },
+    {
+        symbol: "?",
+        arity: 3,
+        apply: (expression, trueBranch, falseBranch) => {
+            return expression > 0 ? trueBranch : falseBranch;
+        }
+    },
+    {
+        symbol: ">",
+        arity: 2,
+        apply: (a, b) => a > b ? 1 : 0
+    },
+    {
+        symbol: "<",
+        arity: 2,
+        apply: (a, b) => a < b ? 1 : 0
+    },
+    {
+        symbol: "==",
+        arity: 2,
+        apply: (a, b) => a == b ? 1 : 0
+    },
+    {
+        symbol: "!=",
+        arity: 2,
+        apply: (a, b) => a !== b ? 1 : 0
+    },
+    {
+        symbol: ">=",
+        arity: 2,
+        apply: (a, b) => a >= b ? 1 : 0
+    },
+    {
+        symbol: "<=",
+        arity: 2,
+        apply: (a, b) => a <= b ? 1 : 0
+    },
+    {
+        symbol: "&",
+        arity: 2,
+        apply: (a, b) => a > 0 && b > 0 ? 1 : 0
+    },
+    {
+        symbol: "|",
+        arity: 2,
+        apply: (a, b) => a > 0 || b > 0 ? 1 : 0
+    },
+    {
+        symbol: "!",
+        arity: 1,
+        apply: (a) => a > 0 ? 0 : 1
     },
 ];
 
@@ -12692,7 +12789,7 @@ class SizeUp {
      *   pull request. The YAML file should conform to the JSON schema in src/config/schema.json.
      */
     static evaluate(diff, configPath) {
-        var _a;
+        var _a, _b;
         let userSuppliedConfig = {};
         if (configPath) {
             const parsed = YAML.parse(fs.readFileSync(configPath, "utf8"));
@@ -12703,7 +12800,8 @@ class SizeUp {
         const testFilePatterns = userSuppliedConfig.testFilePatterns || defaultConfig.testFilePatterns;
         const changeset = new changeset_1.default({ diff, ignoredFilePatterns, testFilePatterns });
         const categories = new category_configuration_1.CategoryConfiguration(userSuppliedConfig.categories || defaultConfig.categories);
-        const formula = new formula_1.Formula(((_a = userSuppliedConfig.scoring) === null || _a === void 0 ? void 0 : _a.formula) || defaultConfig.scoring.formula);
+        const aliases = new Map(Object.entries(((_a = userSuppliedConfig.scoring) === null || _a === void 0 ? void 0 : _a.aliases) || defaultConfig.scoring.aliases || {}));
+        const formula = new formula_1.Formula(((_b = userSuppliedConfig.scoring) === null || _b === void 0 ? void 0 : _b.formula) || defaultConfig.scoring.formula, aliases);
         return formula.evaluate(changeset, categories);
     }
 }

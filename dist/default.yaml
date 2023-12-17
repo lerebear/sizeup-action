@@ -31,4 +31,7 @@ categories:
 ignoredFilePatterns:
   - CODEOWNERS
 scoring:
-  formula: "- - + additions deletions comments whitespace"
+  formula: "? deprecation additions default"
+  aliases:
+    default: "- - + additions deletions comments whitespace"
+    deprecation: ">= / deletions + additions deletions 0.9"

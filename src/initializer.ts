@@ -30,29 +30,22 @@ export function loadConfiguration(): Configuration {
  * Retrieves the diff of the pull request that triggered this workflow which we
  * will use for evaluation.
  *
- * The approach taken below was adapted from:
- * https://github.com/actions/checkout/issues/520#issuecomment-1167205721
- *
  * @param pull The pull request that triggered this workflow.
  * @returns The diff of the given pull request.
  */
 export async function fetchDiff(pull: PullRequest): Promise<string> {
   const git = simpleGit('.', { trimmed: true })
-  const baseRef = `origin/${pull.base.ref}`
-  const baseRefspec = `+${pull.base.sha}:remotes/${baseRef}`
-  const headRef = `origin/${pull.head.ref}`
-  const headRefspec = `+${pull.head.sha}:remotes/${headRef}`
-  const diffArgs = ['--merge-base', baseRef].concat(
+  const diffArgs = ['--merge-base', `origin/${pull.base.ref}`].concat(
     core.getInput('git-diff-args').split(/\s+/)
   )
 
   core.info(`Retrieving diff with \`git diff ${diffArgs.join(' ')}\``)
 
   // Fetch all commits for the head branch back to where it diverged from the base.
-  core.debug(`Fetching ${pull.commits + 1} commits for ${headRefspec}`)
+  core.debug(`Fetching ${pull.commits + 1} commits for ${pull.head.ref}`)
   await git.fetch([
     'origin',
-    headRefspec,
+    `+${pull.head.ref}:${pull.head.ref}`,
     `--depth=${pull.commits + 1}`,
     '--no-tags',
     '--prune',
@@ -62,29 +55,21 @@ export async function fetchDiff(pull: PullRequest): Promise<string> {
   core.debug(`Switching to branch ${pull.head.ref}`)
   await git.raw('switch', pull.head.ref)
 
-  // Find a date that is far enough back to contain the history we need.
-  const commonAncestor = await git.raw(
-    'rev-list',
-    '--first-parent',
-    '--max-parents=0',
-    '--max-count=1',
-    headRef
-  )
-  const commonAncestorCommittedAt = await git.show([
+  // Fetch commits for the base branch that were made since the head diverged from it.
+  const divergedFrom = await git.raw('rev-list', '--max-parents=0', 'HEAD')
+  const divergedAt = await git.show([
     '--quiet',
     '--date=iso8601',
     '--format=%cd',
-    commonAncestor
+    divergedFrom
   ])
-
-  // Fetch commits for the base branch that were made since the head diverged from it.
   core.debug(
-    `Retrieving history for ${baseRefspec} since ${commonAncestor} which was committed at ${commonAncestorCommittedAt}`
+    `Retrieving history for origin/${pull.base.ref} since ${divergedFrom} which was committed at ${divergedAt}`
   )
   await git.fetch([
     'origin',
-    baseRefspec,
-    `--shallow-since=${commonAncestorCommittedAt}`,
+    `+${pull.base.ref}:${pull.base.ref}`,
+    `--shallow-since=${divergedAt}`,
     '--no-tags',
     '--prune',
     '--no-recurse-submodules'

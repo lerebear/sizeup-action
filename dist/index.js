@@ -16400,7 +16400,7 @@ async function fetchDiff(pull) {
     const divergedFrom = await git.raw('rev-list', '--max-parents=0', 'HEAD');
     const divergedAt = await git.show([
         '--quiet',
-        '--date=iso8601',
+        '--date=unix',
         '--format=%cd',
         divergedFrom
     ]);

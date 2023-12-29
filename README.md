@@ -27,14 +27,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out a copy of this repository so that we can compute a diff to
-      # evaluate and load the Action's configuration.
-      - name: Checkout this repository
-        uses: actions/checkout@v4
-
-      # Run the estimation tool
       - name: Run sizeup
         # TODO: Replace the version below with your desired version.
+        #
+        # For more details please see:
+        # https://github.com/lerebear/sizeup-action/blob/main/README.md#versioning
         uses: lerebear/sizeup-action@v0.4.2
         id: sizeup-action
 
@@ -49,23 +46,29 @@ jobs:
           # This input is required.
           token: "${{ secrets.GITHUB_TOKEN }}"
 
-          # Optional arguments that will be forwarded to `git diff` when
-          # computing the diff to evaluate with this Action.
+          # Options that will be forwarded to `git diff` when computing the
+          # diff to evaluate with this workflow.
           #
           # Defaults to "--ignore-space-change", which ignores lines of the
           # diff in which the only change is to the amount of whitespace on the
           # line.
-          git-diff-args: ""
+          git-diff-options: ""
 
-          # Path to a YAML configuration file for this Action that is stored in
-          # this repository.
+          # Path to a YAML configuration file for this workflow that is stored
+          # in this repository.
           #
-          # This input defaults to "", which instructs the Action to use the
+          # This input defaults to "", which instructs the workflow to use the
           # built-in default configuration.
           configuration-file-path: ".github/workflows/sizeup/config.yaml"
 ```
 
-This will use `sizeup` to estimate the reviewability of any pull request opened on your repository using a YAML configuration file found at `.github/workflows/sizeup/config.yaml`. The format of the configuration file is described below.
+This will use [`sizeup`](https://github.com/lerebear/sizeup-core) to estimate the reviewability of any pull request opened on your repository using a YAML configuration file found at `.github/workflows/sizeup/config.yaml`. The format of the configuration file is described below.
+
+Please note that the workflow configuration above does not use [`actions/checkout`](https://github.com/actions/checkout). This is because `actions/checkout` does not provide enough options to make a customized `git diff` command maximally efficient. Instead, this Action will perform its own clone, fetch, and checkout operations using the provided `token`.
+
+## Versioning
+
+This Action follows [semantic versioning conventions](https://semver.org), but is still <1.0. Thus, as is common for pre-1.0 software, breaking changes are  sometimes introduced in minor version bumps (although patch version bumps will only contain backwards-compatible bug fixes). Please bear this in mind when choosing the version of this Action that you would like to use.
 
 ## Configuration
 

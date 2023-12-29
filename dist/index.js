@@ -16319,6 +16319,96 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 6350:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Git = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const lib = __importStar(__nccwpck_require__(9103));
+class Git {
+    client;
+    constructor() {
+        const basicCredential = Buffer.from(`x-access-token:${core.getInput('token')}`, 'utf8').toString('base64');
+        const authorizationHeader = `AUTHORIZATION: basic ${basicCredential}`;
+        core.setSecret(basicCredential);
+        this.client = lib.simpleGit('.', {
+            trimmed: true,
+            config: [`http.extraheader=${authorizationHeader}`]
+        });
+    }
+    /**
+     * Clones the repository from which this workflow was triggered.
+     *
+     * @param repo The repository to clone in the format "<owner>/<name>"
+     * @param headRef The single branch to clone, which should correspond to the
+     *   head ref of the pull request that triggered this workflow. This is
+     *   required for efficiency.
+     * @param targetDirectory The directory in which to clone the repository.
+     */
+    async clone(repo, headRef, targetDirectory = '.') {
+        core.info(`Cloning ${repo} with the single branch "${headRef}"`);
+        await this.client.clone(`https://github.com/${repo}`, targetDirectory, [
+            `--branch=${headRef}`,
+            '--filter=tree:0',
+            '--no-tags',
+            '--single-branch'
+        ]);
+    }
+    /**
+     * Retrieves the diff of the pull request that triggered this workflow which we
+     * will use for evaluation.
+     *
+     * @param baseRef The base branch relative to which we should produce a diff. This method assumes
+     *   that the head ref containing changes relative to this base ref has already been fetched using
+     *   the `headRef` argument to the `clone` method.
+     * @returns The diff of the given pull request or `undefined` if we failed to retrieve it.
+     */
+    async diff(baseRef) {
+        core.debug(`Fetching base ref "${baseRef}"`);
+        await this.client.fetch([
+            'origin',
+            `+${baseRef}:${baseRef}`,
+            `--filter=tree:0`,
+            '--no-tags',
+            '--prune',
+            '--no-recurse-submodules'
+        ]);
+        const diffArgs = ['--merge-base', baseRef].concat(core.getInput('git-diff-options').split(/\s+/));
+        core.info(`Retrieving diff with \`git diff ${diffArgs.join(' ')}\``);
+        return this.client.diff(diffArgs);
+    }
+}
+exports.Git = Git;
+
+
+/***/ }),
+
 /***/ 9477:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -16348,13 +16438,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.pullRequestAuthorHasNotOptedIn = exports.workflowTriggeredForUnsupportedEvent = exports.fetchDiff = exports.loadConfiguration = void 0;
+exports.pullRequestAuthorHasNotOptedIn = exports.loadConfiguration = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const github = __importStar(__nccwpck_require__(5438));
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
 const YAML = __importStar(__nccwpck_require__(4083));
-const simple_git_1 = __nccwpck_require__(9103);
 /**
  * Loads either the configuration file provided to the workflow, or the default
  * configuration file from "./config/default.yaml".
@@ -16374,64 +16462,18 @@ function loadConfiguration() {
 }
 exports.loadConfiguration = loadConfiguration;
 /**
- * Retrieves the diff of the pull request that triggered this workflow which we
- * will use for evaluation.
  *
- * @param pull The pull request that triggered this workflow.
- * @returns The diff of the given pull request.
+ * @param pull The pull request that triggered this workflow
+ * @param config The configuration for this workflow
+ * @returns True if the pull request author has not opted into this workflow
+ *   (meaning that we should quit early), false otherwise (meaning that we
+ *   should proceed with evaluation of the pull request).
  */
-async function fetchDiff(pull) {
-    const git = (0, simple_git_1.simpleGit)('.', { trimmed: true });
-    const diffArgs = ['--merge-base', `origin/${pull.base.ref}`].concat(core.getInput('git-diff-args').split(/\s+/));
-    core.info(`Retrieving diff with \`git diff ${diffArgs.join(' ')}\``);
-    // Fetch all commits for the head branch back to where it diverged from the base.
-    core.debug(`Fetching ${pull.commits + 1} commits for ${pull.head.ref}`);
-    await git.fetch([
-        'origin',
-        `+${pull.head.ref}:${pull.head.ref}`,
-        `--depth=${pull.commits + 1}`,
-        '--no-tags',
-        '--prune',
-        '--no-recurse-submodules'
-    ]);
-    core.debug(`Switching to branch ${pull.head.ref}`);
-    await git.raw('switch', pull.head.ref);
-    // Fetch commits for the base branch that were made since the head diverged from it.
-    const divergedFrom = await git.raw('rev-list', '--max-parents=0', 'HEAD');
-    const divergedAt = await git.show([
-        '--quiet',
-        '--date=unix',
-        '--format=%cd',
-        divergedFrom
-    ]);
-    core.debug(`Retrieving history for origin/${pull.base.ref} since ${divergedFrom} which was committed at ${divergedAt}`);
-    await git.fetch([
-        'origin',
-        `+${pull.base.ref}:${pull.base.ref}`,
-        `--shallow-since=${divergedAt}`,
-        '--no-tags',
-        '--prune',
-        '--no-recurse-submodules'
-    ]);
-    // Now we have all relevant history from both base and head branches, so we
-    // can compute an accurate diff relative to the base branch.
-    return git.diff(diffArgs);
-}
-exports.fetchDiff = fetchDiff;
-function workflowTriggeredForUnsupportedEvent() {
-    if (github.context.eventName !== 'pull_request') {
-        core.setFailed("This action is only supported on the 'pull_request' event, " +
-            `but it was triggered for '${github.context.eventName}'`);
-        return true;
-    }
-    return false;
-}
-exports.workflowTriggeredForUnsupportedEvent = workflowTriggeredForUnsupportedEvent;
-function pullRequestAuthorHasNotOptedIn(config, pullRequest) {
+function pullRequestAuthorHasNotOptedIn(pull, config) {
     const usersWhoHaveOptedin = config.optIns || [];
     if (usersWhoHaveOptedin.length &&
-        !usersWhoHaveOptedin.find((login) => login === pullRequest.user.login)) {
-        core.info(`Skipping evaluation because pull request author @${pullRequest.user.login} has not opted` +
+        !usersWhoHaveOptedin.find((login) => login === pull.user.login)) {
+        core.info(`Skipping evaluation because pull request author @${pull.user.login} has not opted` +
             ' into this workflow');
         return true;
     }
@@ -16479,6 +16521,7 @@ const YAML = __importStar(__nccwpck_require__(4083));
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
 const initializer_1 = __nccwpck_require__(9477);
+const git_1 = __nccwpck_require__(6350);
 const DEFAULT_LABEL_PREFIX = 'sizeup/';
 const DEFAULT_COMMENT_TEMPLATE = `
 👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
@@ -16495,13 +16538,19 @@ const DEFAULT_SCORE_THRESHOLD = 100;
  */
 async function run() {
     try {
-        if ((0, initializer_1.workflowTriggeredForUnsupportedEvent)())
+        if (github.context.eventName !== 'pull_request') {
+            core.setFailed("This action is only supported on the 'pull_request' event, " +
+                `but it was triggered for '${github.context.eventName}'`);
             return;
-        const config = (0, initializer_1.loadConfiguration)();
+        }
         const pullRequest = github.context.payload.pull_request;
-        if ((0, initializer_1.pullRequestAuthorHasNotOptedIn)(config, pullRequest))
+        const git = new git_1.Git();
+        await git.clone(pullRequest.base.repo.full_name, pullRequest.head.ref);
+        const config = (0, initializer_1.loadConfiguration)();
+        if ((0, initializer_1.pullRequestAuthorHasNotOptedIn)(pullRequest, config))
             return;
-        const score = await evaluatePullRequest(pullRequest, config);
+        const diff = await git.diff(pullRequest.base.ref);
+        const score = await evaluatePullRequest(pullRequest, diff, config);
         await applyCategoryLabel(pullRequest, score, config);
         await addScoreThresholdExceededComment(pullRequest, score, config);
     }
@@ -16521,8 +16570,8 @@ exports.run = run;
  *   to the `sizeup` library.
  * @returns The score that the pull request received
  */
-async function evaluatePullRequest(pull, config) {
-    const pullRequestNickname = `${pull.base.repo.owner.login}/${pull.base.repo.name}#${pull.number}`;
+async function evaluatePullRequest(pull, diff, config) {
+    const pullRequestNickname = `${pull.base.repo.full_name}#${pull.number}`;
     core.info(`Evaluating pull request ${pullRequestNickname}`);
     let sizeupConfigFile = undefined;
     if (config.sizeup) {
@@ -16530,12 +16579,11 @@ async function evaluatePullRequest(pull, config) {
         fs.mkdirSync(path.dirname(sizeupConfigFile));
         fs.writeFileSync(sizeupConfigFile, YAML.stringify(config.sizeup));
     }
-    const diff = await (0, initializer_1.fetchDiff)(pull);
     const score = sizeup_core_1.SizeUp.evaluate(diff, sizeupConfigFile);
     if (sizeupConfigFile) {
         fs.rmSync(sizeupConfigFile, { force: true, recursive: true });
     }
-    core.info(`${pullRequestNickname} received a score of ${score.result} (${score.category.name})`);
+    core.info(`Pull request ${pullRequestNickname} received a score of ${score.result} (${score.category.name})`);
     core.info(`The score was computed as follows:\n${score.toString()}`);
     core.setOutput('score', score.result);
     core.setOutput('category', score.category.name);

@@ -7,11 +7,10 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { Configuration } from './configuration'
 import {
-  fetchDiff,
   loadConfiguration,
-  pullRequestAuthorHasNotOptedIn,
-  workflowTriggeredForUnsupportedEvent
+  pullRequestAuthorHasNotOptedIn
 } from './initializer'
+import { Git } from './git'
 
 const DEFAULT_LABEL_PREFIX = 'sizeup/'
 const DEFAULT_COMMENT_TEMPLATE = `
@@ -30,15 +29,24 @@ const DEFAULT_SCORE_THRESHOLD = 100
  */
 export async function run(): Promise<void> {
   try {
-    if (workflowTriggeredForUnsupportedEvent()) return
+    if (github.context.eventName !== 'pull_request') {
+      core.setFailed(
+        "This action is only supported on the 'pull_request' event, " +
+          `but it was triggered for '${github.context.eventName}'`
+      )
+      return
+    }
 
-    const config = loadConfiguration()
     const pullRequest = github.context.payload.pull_request as PullRequest
 
-    if (pullRequestAuthorHasNotOptedIn(config, pullRequest)) return
+    const git = new Git()
+    await git.clone(pullRequest.base.repo.full_name, pullRequest.head.ref)
 
-    const score = await evaluatePullRequest(pullRequest, config)
+    const config = loadConfiguration()
+    if (pullRequestAuthorHasNotOptedIn(pullRequest, config)) return
 
+    const diff = await git.diff(pullRequest.base.ref)
+    const score = await evaluatePullRequest(pullRequest, diff, config)
     await applyCategoryLabel(pullRequest, score, config)
     await addScoreThresholdExceededComment(pullRequest, score, config)
   } catch (error) {
@@ -58,9 +66,10 @@ export async function run(): Promise<void> {
  */
 async function evaluatePullRequest(
   pull: PullRequest,
+  diff: string,
   config: Configuration
 ): Promise<Score> {
-  const pullRequestNickname = `${pull.base.repo.owner.login}/${pull.base.repo.name}#${pull.number}`
+  const pullRequestNickname = `${pull.base.repo.full_name}#${pull.number}`
   core.info(`Evaluating pull request ${pullRequestNickname}`)
 
   let sizeupConfigFile = undefined
@@ -70,7 +79,6 @@ async function evaluatePullRequest(
     fs.writeFileSync(sizeupConfigFile, YAML.stringify(config.sizeup))
   }
 
-  const diff = await fetchDiff(pull)
   const score = SizeUp.evaluate(diff, sizeupConfigFile)
 
   if (sizeupConfigFile) {
@@ -78,7 +86,7 @@ async function evaluatePullRequest(
   }
 
   core.info(
-    `${pullRequestNickname} received a score of ${score.result} (${
+    `Pull request ${pullRequestNickname} received a score of ${score.result} (${
       score.category!.name
     })`
   )

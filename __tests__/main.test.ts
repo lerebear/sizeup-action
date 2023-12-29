@@ -9,20 +9,30 @@
 import * as core from '@actions/core'
 import * as main from '../src/main'
 import * as initializer from '../src/initializer'
+import { Git } from '../src/git'
 import * as github from '@actions/github'
 
 function pullRequestEventContext(overrides = {}): object {
   return {
     eventName: 'pull_request',
+    repo: {
+      owner: 'lerebear',
+      name: 'sizeup-action'
+    },
     payload: {
       pull_request: {
         base: {
+          ref: 'main',
           repo: {
+            full_name: 'lerebear/sizeup-action',
             name: 'sizeup-action',
             owner: {
               login: 'lerebear'
             }
           }
+        },
+        head: {
+          ref: 'topic'
         },
         labels: [],
         number: 1,
@@ -69,9 +79,12 @@ describe('action', () => {
   // Shallow clone original @actions/github context
   const originalContext = { ...github.context }
 
+  // Mock cloning the repo
+  jest.spyOn(Git.prototype, 'clone').mockImplementation(async () => {})
+
   // Mock the diff that we use for evaluation.
   jest
-    .spyOn(initializer, 'fetchDiff')
+    .spyOn(Git.prototype, 'diff')
     .mockImplementation(async () =>
       Promise.resolve(
         '--- README.md	2023-10-16 16:35:38\n+++ README-AGAIN.md	2023-10-16 16:36:07\n@@ -0,0 +1 @@\n+# Hello, World!'

@@ -6,9 +6,9 @@ inputs:
   token:
     description: 'GitHub API token with read permissions for pull requests in this repository.'
     required: true
-  git-diff-args:
+  git-diff-options:
     description: |
-      Optional custom arguments to forward to `git diff` when retrieving the diff of the pull request that triggered this workflow.
+      Custom options to forward to `git diff` when retrieving the diff of the pull request that triggered this workflow.
       The result of that `git diff` command will be used for evaluation with sizeup.
     default: '--ignore-space-change'
   configuration-file-path:

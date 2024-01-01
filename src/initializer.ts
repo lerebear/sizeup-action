@@ -51,3 +51,14 @@ export function pullRequestAuthorHasNotOptedIn(
 
   return false
 }
+
+/**
+ * If necessary, provides a default for an undefined configuration value.
+ *
+ * @param value The raw value from the configuration file
+ * @param defaultValue The value to use if the raw value is undefined
+ * @returns The final value to use for the configuration
+ */
+export function configOrDefault<T>(value: T | undefined, defaultValue: T): T {
+  return value !== undefined ? value : defaultValue
+}

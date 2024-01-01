@@ -7,20 +7,14 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { Configuration } from './configuration'
 import {
+  configOrDefault,
   loadConfiguration,
   pullRequestAuthorHasNotOptedIn
 } from './initializer'
 import { Git } from './git'
+import { addOrUpdateScoreThresholdExceededComment } from './commenting'
 
 const DEFAULT_LABEL_PREFIX = 'sizeup/'
-const DEFAULT_COMMENT_TEMPLATE = `
-👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
-
-[Research](https://www.cabird.com/static/93aba3256c80506d3948983db34d3ba3/rigby2013convergent.pdf) has shown that this makes it harder for reviewers to provide quality feedback.
-
-We recommend that you reduce the size of this PR by separating commits into stacked PRs.
-`
-const DEFAULT_SCORE_THRESHOLD = 100
 
 /**
  * The main function for the action.
@@ -48,7 +42,7 @@ export async function run(): Promise<void> {
     const diff = await git.diff(pullRequest.base.ref)
     const score = await evaluatePullRequest(pullRequest, diff, config)
     await applyCategoryLabel(pullRequest, score, config)
-    await addScoreThresholdExceededComment(pullRequest, score, config)
+    await addOrUpdateScoreThresholdExceededComment(pullRequest, score, config)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
@@ -238,82 +232,4 @@ async function applyLabel(
       core.info(`Would have removed stale category label "${labelName}`)
     }
   }
-}
-
-/**
- * If the configuration requests it and this pull request exceeds the configured
- * score threshold, this adds a comment saying as much.
- *
- * @param pull The pull request under evaluation
- * @param score The score the pull request received from `sizeup`
- * @param config The configuration for this workflow run
- */
-async function addScoreThresholdExceededComment(
-  pull: PullRequest,
-  score: Score,
-  config: Configuration
-): Promise<void> {
-  const threshold = configOrDefault(
-    config.commenting?.scoreThreshold,
-    DEFAULT_SCORE_THRESHOLD
-  )
-  if (score.result! <= threshold) return
-
-  if (
-    pull.draft &&
-    configOrDefault(config.commenting?.excludeDraftPullRequests, true)
-  ) {
-    core.info('Skipping commenting on a draft pull request')
-    return
-  }
-
-  const commentTemplate =
-    config.commenting?.commentTemplate !== undefined
-      ? config.commenting?.commentTemplate
-      : DEFAULT_COMMENT_TEMPLATE
-
-  const comment = commentTemplate
-    .replaceAll('{{author}}', pull.user.login)
-    .replaceAll('{{score}}', `${score.result!}`)
-    .replaceAll('{{category}}', score.category!.name)
-    .replaceAll('{{threshold}}', `${threshold}`)
-
-  if (
-    !configOrDefault(
-      config.commenting?.addCommentWhenScoreThresholdHasBeenExceeded,
-      true
-    )
-  ) {
-    const indentedComment = comment
-      .split('\n')
-      .map(l => `  ${l}`)
-      .join('\n')
-    core.info(
-      `Would have added the following comment to the pull request:\n${indentedComment}`
-    )
-    return
-  }
-
-  core.info(
-    'Adding comment to pull request noting that the score threshold has been exceeded'
-  )
-
-  const octokit = github.getOctokit(core.getInput('token'))
-  await octokit.rest.issues.createComment({
-    owner: pull.base.repo.owner.login,
-    repo: pull.base.repo.name,
-    issue_number: pull.number,
-    body: comment
-  })
-}
-
-/**
- * If necessary, provides a default for an undefined configuration value.
- *
- * @param value The raw value from the configuration file
- * @param defaultValue The value to use if the raw value is undefined
- * @returns The final value to use for the configuration
- */
-function configOrDefault<T>(value: T | undefined, defaultValue: T): T {
-  return value !== undefined ? value : defaultValue
 }

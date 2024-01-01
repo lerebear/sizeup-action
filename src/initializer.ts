@@ -15,7 +15,7 @@ export function loadConfiguration(): Configuration {
   let configFile = core.getInput('configuration-file-path')
 
   if (configFile) {
-    core.info(`Reading sizeup configuration from ${configFile}`)
+    core.info(`Reading sizeup configuration from "${configFile}"`)
   } else {
     core.info('Using default sizeup configuration')
     configFile = path.resolve(__dirname, './config/default.yaml')

@@ -16457,7 +16457,7 @@ const YAML = __importStar(__nccwpck_require__(4083));
 function loadConfiguration() {
     let configFile = core.getInput('configuration-file-path');
     if (configFile) {
-        core.info(`Reading sizeup configuration from ${configFile}`);
+        core.info(`Reading sizeup configuration from "${configFile}"`);
     }
     else {
         core.info('Using default sizeup configuration');

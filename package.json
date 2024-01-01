@@ -1,7 +1,7 @@
 {
   "name": "sizeup-action",
   "description": "Encourage digestible pull requests",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "author": "Ọlálérè Williams",
   "private": true,
   "homepage": "https://github.com/lerbear/sizeup-action",

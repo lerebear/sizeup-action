@@ -16377,7 +16377,7 @@ class Git {
      * @param targetDirectory The directory in which to clone the repository.
      */
     async clone(repo, headRef, targetDirectory = '.') {
-        core.info(`Cloning ${repo} with the single branch "${headRef}"`);
+        core.debug(`Cloning ${repo} with the single branch "${headRef}"`);
         await this.client.clone(`https://github.com/${repo}`, targetDirectory, [
             `--branch=${headRef}`,
             '--filter=tree:0',

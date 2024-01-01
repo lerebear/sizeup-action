@@ -32,7 +32,7 @@ export class Git {
     headRef: string,
     targetDirectory = '.'
   ): Promise<void> {
-    core.info(`Cloning ${repo} with the single branch "${headRef}"`)
+    core.debug(`Cloning ${repo} with the single branch "${headRef}"`)
 
     await this.client.clone(`https://github.com/${repo}`, targetDirectory, [
       `--branch=${headRef}`,

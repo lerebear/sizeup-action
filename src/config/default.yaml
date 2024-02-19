@@ -69,4 +69,4 @@ sizeup:
     formula: "? deprecation additions default"
     aliases:
       default: "- - + additions deletions comments whitespace"
-      deprecation: ">= / deletions + additions deletions 0.9"
+      deprecation: "& > deletions 0 >= / deletions + additions deletions 0.9"

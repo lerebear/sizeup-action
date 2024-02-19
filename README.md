@@ -14,7 +14,14 @@ All aspects of this Action are [configurable](#configuration), including how siz
 ```yaml
 name: SizeUp
 
-on: pull_request
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+      - ready_for_review
 
 permissions:
   contents: read

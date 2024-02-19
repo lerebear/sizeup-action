@@ -109,6 +109,7 @@ commenting:
   #   - threshold
   #   - score
   #   - category
+  #   - score-details
   commentTemplate: |
     👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
 

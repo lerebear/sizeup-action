@@ -118,11 +118,20 @@ function scoreThresholdExceededComment(
       ? config.commenting?.commentTemplate
       : DEFAULT_COMMENT_TEMPLATE
 
+  const detailsElement = `<details>
+<summary>Score details</summary>
+<pre>
+${score.toString()}
+</pre>
+</details>
+`
+
   const comment = commentTemplate
     .replaceAll('{{author}}', pull.user.login)
     .replaceAll('{{score}}', `${score.result!}`)
     .replaceAll('{{category}}', score.category!.name)
     .replaceAll('{{threshold}}', `${threshold}`)
+    .replaceAll('{{score-details}}', detailsElement)
 
   return `${COMMENT_METADATA}\n\n${comment}`
 }

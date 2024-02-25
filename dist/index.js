@@ -12127,6 +12127,63 @@ exports["default"] = Changeset;
 
 /***/ }),
 
+/***/ 8001:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Context = void 0;
+/**
+ * Defines the context in which a particular expression will be evaluated.
+ */
+class Context {
+    /**
+     * @param param0 Configuration for this evaluation context
+     */
+    constructor({ changeset, aliases, categories }) {
+        /**
+         * A cache of sub-expressions that have already been computed. This is used to speed up repeated
+         * evaluation of common sub-expressions. It can also be used to debug or inspect the evaluation
+         * process.
+         */
+        this.cache = new Map();
+        this.changeset = changeset;
+        this.categories = categories;
+        this.aliases = aliases;
+    }
+}
+exports.Context = Context;
+
+
+/***/ }),
+
+/***/ 3709:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FeatureRegistry = void 0;
+const additions_1 = __nccwpck_require__(9813);
+const comments_1 = __nccwpck_require__(4494);
+const deletions_1 = __nccwpck_require__(679);
+const single_words_1 = __nccwpck_require__(7558);
+const tests_1 = __nccwpck_require__(2513);
+const whitespace_1 = __nccwpck_require__(6496);
+/** The collection of features that are available for use in an evaluation formula. */
+exports.FeatureRegistry = new Map([
+    [additions_1.default.variableName(), additions_1.default],
+    [comments_1.default.variableName(), comments_1.default],
+    [deletions_1.default.variableName(), deletions_1.default],
+    [single_words_1.default.variableName(), single_words_1.default],
+    [tests_1.default.variableName(), tests_1.default],
+    [whitespace_1.default.variableName(), whitespace_1.default],
+]);
+
+
+/***/ }),
+
 /***/ 7184:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -12332,128 +12389,16 @@ exports["default"] = Whitespace;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Formula = void 0;
-const operators_1 = __nccwpck_require__(9996);
-const registry_1 = __nccwpck_require__(3351);
 const score_1 = __nccwpck_require__(436);
-const NUMERIC_CONSTANT_RE = /-?\d+(\.\d+)?/;
-const ALIAS_RE = /^[\w][\w-]*$/;
+const node_1 = __nccwpck_require__(7658);
 /** Represents a mathematical expression that we use to evaluate a Changeset. */
 class Formula {
-    constructor(expression, aliases = new Map(), cache = new Map()) {
+    constructor(expression) {
         this.expression = expression;
-        this.aliases = aliases;
-        this.cache = cache;
     }
-    /**
-     *
-     * @param changeset The code to evaluate
-     * @param categories The set of all available score categories to choose from
-     * @returns The compute score of the Changeset according to this formula
-     */
-    evaluate(changeset, categories) {
-        const result = new score_1.Score(this.expression);
-        const stack = [];
-        const tokens = this.expression.split(/\s+/);
-        while (tokens.length) {
-            const tokenPosition = tokens.length;
-            const token = tokens.pop();
-            const operator = this.toOperator(token);
-            if (!this.isValidToken(token, tokenPosition, result)) {
-                return result;
-            }
-            if (this.cache.has(token)) {
-                stack.push(this.cache.get(token));
-            }
-            else if (this.isAlias(token)) {
-                const formula = new Formula(this.aliases.get(token), this.aliases, this.cache);
-                const score = formula.evaluate(changeset);
-                for (const [name, value] of score.variableSubstitutions.entries()) {
-                    result.recordVariableSubstitution(name, value);
-                }
-                result.recordVariableSubstitution(token, score.result);
-                stack.push(score.result);
-            }
-            else if (this.isFeature(token)) {
-                const FeatureClass = registry_1.FeatureRegistry.get(token);
-                const feature = new FeatureClass(changeset);
-                const value = feature.evaluate();
-                const variableName = FeatureClass.variableName();
-                result.recordVariableSubstitution(variableName, value);
-                this.cache.set(variableName, value);
-                stack.push(value);
-            }
-            else if (this.isNumericConstant(token)) {
-                stack.push(parseFloat(token));
-            }
-            else if (operator && stack.length >= operator.arity) {
-                const operands = stack.splice(stack.length - operator.arity, operator.arity).reverse();
-                stack.push(operator.apply(...operands));
-            }
-            else if (operator) {
-                result.addError({
-                    message: (`Not enough operands for operator: ${operator.symbol}`),
-                    tokenPosition
-                });
-                return result;
-            }
-        }
-        if (stack.length != 1) {
-            result.addError({ message: `Formula contains too many operands`, tokenPosition: 1 });
-            return result;
-        }
-        result.addValue(
-        // Round to two decimal places: https://stackoverflow.com/a/11832950
-        Math.round((stack[0] + Number.EPSILON) * 100) / 100, categories);
-        return result;
-    }
-    isValidToken(token, position, result) {
-        if (!this.isSupportedToken(token)) {
-            result.addError({
-                message: (`Formula contains unsupported token: ${token}`),
-                tokenPosition: position
-            });
-            return false;
-        }
-        if (this.isAlias(token) && this.isFeature(token)) {
-            result.addError({
-                message: `Alias must not share a name with a feature: ${token}`,
-                tokenPosition: position
-            });
-            return false;
-        }
-        if (this.isAlias(token) && !token.match(ALIAS_RE)) {
-            result.addError({
-                message: `Alias does not match ${ALIAS_RE}: ${token}`,
-                tokenPosition: position
-            });
-            return false;
-        }
-        return true;
-    }
-    isSupportedToken(token) {
-        return this.isOperator(token) || this.isOperand(token);
-    }
-    isOperator(token) {
-        return !!this.toOperator(token);
-    }
-    toOperator(token) {
-        for (const op of operators_1.SUPPORTED_OPERATORS) {
-            if (op.symbol == token) {
-                return op;
-            }
-        }
-    }
-    isOperand(token) {
-        return this.isAlias(token) || this.isFeature(token) || this.isNumericConstant(token);
-    }
-    isAlias(token) {
-        return this.aliases.has(token);
-    }
-    isFeature(token) {
-        return registry_1.FeatureRegistry.has(token);
-    }
-    isNumericConstant(token) {
-        return !!token.match(NUMERIC_CONSTANT_RE);
+    evaluate(context) {
+        const ast = node_1.Node.build_ast(this.expression, context);
+        return new score_1.Score(this.expression, ast.evaluate(context), context);
     }
 }
 exports.Formula = Formula;
@@ -12592,122 +12537,319 @@ exports.SUPPORTED_LANGUAGES = [
 
 /***/ }),
 
-/***/ 9996:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SUPPORTED_OPERATORS = void 0;
-exports.SUPPORTED_OPERATORS = [
-    {
-        symbol: "+",
-        arity: 2,
-        apply: (a, b) => a + b
-    },
-    {
-        symbol: "-",
-        arity: 2,
-        apply: (a, b) => a - b
-    },
-    {
-        symbol: "*",
-        arity: 2,
-        apply: (a, b) => a * b
-    },
-    {
-        symbol: "/",
-        arity: 2,
-        apply: (a, b) => {
-            if (b == 0) {
-                throw new Error("Cannot divide by zero");
-            }
-            return a / b;
-        }
-    },
-    {
-        symbol: "^",
-        arity: 2,
-        apply: (a, b) => a ** b
-    },
-    {
-        symbol: "?",
-        arity: 3,
-        apply: (expression, trueBranch, falseBranch) => {
-            return expression > 0 ? trueBranch : falseBranch;
-        }
-    },
-    {
-        symbol: ">",
-        arity: 2,
-        apply: (a, b) => a > b ? 1 : 0
-    },
-    {
-        symbol: "<",
-        arity: 2,
-        apply: (a, b) => a < b ? 1 : 0
-    },
-    {
-        symbol: "==",
-        arity: 2,
-        apply: (a, b) => a == b ? 1 : 0
-    },
-    {
-        symbol: "!=",
-        arity: 2,
-        apply: (a, b) => a !== b ? 1 : 0
-    },
-    {
-        symbol: ">=",
-        arity: 2,
-        apply: (a, b) => a >= b ? 1 : 0
-    },
-    {
-        symbol: "<=",
-        arity: 2,
-        apply: (a, b) => a <= b ? 1 : 0
-    },
-    {
-        symbol: "&",
-        arity: 2,
-        apply: (a, b) => a > 0 && b > 0 ? 1 : 0
-    },
-    {
-        symbol: "|",
-        arity: 2,
-        apply: (a, b) => a > 0 || b > 0 ? 1 : 0
-    },
-    {
-        symbol: "!",
-        arity: 1,
-        apply: (a) => a > 0 ? 0 : 1
-    },
-];
-
-
-/***/ }),
-
-/***/ 3351:
+/***/ 7658:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.FeatureRegistry = void 0;
-const additions_1 = __nccwpck_require__(9813);
-const comments_1 = __nccwpck_require__(4494);
-const deletions_1 = __nccwpck_require__(679);
-const single_words_1 = __nccwpck_require__(7558);
-const tests_1 = __nccwpck_require__(2513);
-const whitespace_1 = __nccwpck_require__(6496);
+exports.ConstantNode = exports.Node = void 0;
+const operator_registry_1 = __nccwpck_require__(1607);
+const feature_registry_1 = __nccwpck_require__(3709);
+const NUMERIC_CONSTANT_RE = /-?\d+(\.\d+)?/;
+const ALIAS_RE = /^[\w][\w-]*$/;
+/**
+ * Represents a node in an abstract syntax tree. The tree as a whole is
+ * typically identified by an instance of this class that represents the root
+ * node.
+ */
+class Node {
+    /**
+     * Constructs an abstract syntax tree from the given expression
+     *
+     * @param expression The string written by the end-user in a formula e.g. "+ additions deletions"
+     * @param context The current evaluation context
+     * @returns The root node of the new tree
+     */
+    static build_ast(expression, context) {
+        const tokens = expression.split(/\s+/);
+        const result = Node._build(tokens, 1, context);
+        if (tokens.length) {
+            throw new Error(`Expression "${expression}" contains an unreachable suffix: "${tokens.join(" ")}"`);
+        }
+        return result;
+    }
+    /**
+     * @param token A single space-delimited string in an expression
+     * @param position The 1-based position of the token in the overall expression
+     */
+    constructor(token, position) {
+        this.token = token;
+        this.position = position;
+        this.children = [];
+    }
+    /**
+     * @returns Human-readable representation of the node
+     */
+    toString() {
+        return this.token;
+    }
+    static _build(tokens, position, context) {
+        const token = tokens.shift();
+        const node = Node.from(token, position, context);
+        if (node instanceof OperatorNode && tokens.length < node.operator.arity) {
+            throw new Error(`Not enough operands for operator ${token} at position ${position}`);
+        }
+        if (node instanceof OperatorNode) {
+            for (let i = 0; i < node.operator.arity; i++) {
+                node.children.push(Node._build(tokens, position + i + 1, context));
+            }
+        }
+        return node;
+    }
+    static from(token, position, context) {
+        var _a;
+        const operator = operator_registry_1.OperatorRegistry.get(token);
+        if ((_a = context.aliases) === null || _a === void 0 ? void 0 : _a.has(token)) {
+            if (feature_registry_1.FeatureRegistry.has(token))
+                throw new Error(`Alias must not share a name with a feature: ${token}`);
+            if (!token.match(ALIAS_RE))
+                throw new Error(`Alias does not match ${ALIAS_RE}: ${token}`);
+            return new AliasNode(token, position, context.aliases.get(token));
+        }
+        else if (token.match(NUMERIC_CONSTANT_RE)) {
+            return new ConstantNode(token, position, parseFloat(token));
+        }
+        else if (feature_registry_1.FeatureRegistry.has(token)) {
+            if (!context.changeset)
+                throw new Error(`A changeset is required to evaluate a Feature`);
+            const FeatureConstructor = feature_registry_1.FeatureRegistry.get(token);
+            return new FeatureNode(token, position, new FeatureConstructor(context.changeset));
+        }
+        else if (operator) {
+            return new OperatorNode(token, position, operator);
+        }
+        throw new Error(`Invalid token at position ${position}: ${token}`);
+    }
+}
+exports.Node = Node;
+/**
+ * A node that represents an alias (from the `scoring.aliases` configuration).
+ */
+class AliasNode extends Node {
+    /**
+     *
+     * @param token The name of the alias (the left hand side of a key in the `scoring.aliases` configuration)
+     * @param position The 1-based position in which the alias appears in the `scoring.formula` configuration
+     * @param expansion The value of the alias (the right hand side of a key in the `scoring.aliases` configuration)
+     */
+    constructor(token, position, expansion) {
+        super(token, position);
+        this.expansion = expansion;
+    }
+    evaluate(context) {
+        if (context.cache.has(this.token))
+            return context.cache.get(this.token);
+        const result = Node.build_ast(this.expansion, context).evaluate(context);
+        context.cache.set(this.token, result);
+        return result;
+    }
+}
+/**
+ * A node that represents a numeric constant.
+ */
+class ConstantNode extends Node {
+    /**
+     *
+     * @param token The string that the end-user wrote in a formula or alias
+     * @param position The 1-based position in which the constant appears in the `scoring.formula` configuration
+     * @param value The numeric value of the constant
+     */
+    constructor(token, position, value) {
+        super(token, position);
+        this.value = value;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    evaluate(context) {
+        return this.value;
+    }
+}
+exports.ConstantNode = ConstantNode;
+/**
+ * A node that represents a feature to evaluate on the diff.
+ */
+class FeatureNode extends Node {
+    /**
+     *
+     * @param token The name of the feature
+     * @param position The 1-based position in which the feature appears in the `scoring.formula` configuration
+     * @param feature An instance of the class that implements the relevant feature
+     */
+    constructor(token, position, feature) {
+        super(token, position);
+        this.feature = feature;
+    }
+    evaluate(context) {
+        if (context.cache.has(this.token))
+            return context.cache.get(this.token);
+        const result = this.feature.evaluate();
+        context.cache.set(this.token, result);
+        return result;
+    }
+}
+/**
+ * A node that represents an operator.
+ */
+class OperatorNode extends Node {
+    /**
+     *
+     * @param token The symbol that represents the operator
+     * @param position The 1-based position of the operator in the `scoring.formula` configuration
+     * @param operator An instance of the class that implements the operator
+     */
+    constructor(token, position, operator) {
+        super(token, position);
+        this.operator = operator;
+    }
+    evaluate(context) {
+        return this.operator.apply(context, ...this.children);
+    }
+    toString() {
+        return [this.token, ...this.children.map((c) => c.toString())].join(" ");
+    }
+}
+
+
+/***/ }),
+
+/***/ 1607:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.OperatorRegistry = void 0;
+const Plus = {
+    symbol: "+",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) + b.evaluate(context);
+    }
+};
+const Minus = {
+    symbol: "-",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) - b.evaluate(context);
+    }
+};
+const Times = {
+    symbol: "*",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) * b.evaluate(context);
+    }
+};
+const Division = {
+    symbol: "/",
+    arity: 2,
+    apply: (context, a, b) => {
+        const divisor = b.evaluate(context);
+        if (divisor == 0) {
+            throw new Error(`"${b.token}" evaluated to zero, so it cannot be used as a divisor`);
+        }
+        return a.evaluate(context) / b.evaluate(context);
+    }
+};
+const Exponent = {
+    symbol: "^",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) ** b.evaluate(context);
+    }
+};
+const GreaterThan = {
+    symbol: ">",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) > b.evaluate(context) ? 1 : 0;
+    }
+};
+const GreaterThanOrEqual = {
+    symbol: ">=",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) >= b.evaluate(context) ? 1 : 0;
+    }
+};
+const LessThan = {
+    symbol: "<",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) < b.evaluate(context) ? 1 : 0;
+    }
+};
+const LessThanOrEqual = {
+    symbol: "<=",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) <= b.evaluate(context) ? 1 : 0;
+    }
+};
+const Equals = {
+    symbol: "==",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) === b.evaluate(context) ? 1 : 0;
+    }
+};
+const NotEquals = {
+    symbol: "!=",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) !== b.evaluate(context) ? 1 : 0;
+    }
+};
+const And = {
+    symbol: "&",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) > 0 && b.evaluate(context) > 0 ? 1 : 0;
+    }
+};
+const Or = {
+    symbol: "|",
+    arity: 2,
+    apply: (context, a, b) => {
+        return a.evaluate(context) > 0 || b.evaluate(context) > 0 ? 1 : 0;
+    }
+};
+const Not = {
+    symbol: "!",
+    arity: 1,
+    apply: (context, a) => {
+        return a.evaluate(context) > 0 ? 0 : 1;
+    }
+};
+const IfElse = {
+    symbol: "?",
+    arity: 3,
+    apply: (context, condition, trueBranch, falseBranch) => {
+        if (condition.evaluate(context) > 0) {
+            return trueBranch.evaluate(context);
+        }
+        else {
+            return falseBranch.evaluate(context);
+        }
+    }
+};
 /** The collection of features that are available for use in an evaluation formula. */
-exports.FeatureRegistry = new Map([
-    [additions_1.default.variableName(), additions_1.default],
-    [comments_1.default.variableName(), comments_1.default],
-    [deletions_1.default.variableName(), deletions_1.default],
-    [single_words_1.default.variableName(), single_words_1.default],
-    [tests_1.default.variableName(), tests_1.default],
-    [whitespace_1.default.variableName(), whitespace_1.default],
+exports.OperatorRegistry = new Map([
+    [Plus.symbol, Plus],
+    [Minus.symbol, Minus],
+    [Times.symbol, Times],
+    [Division.symbol, Division],
+    [Exponent.symbol, Exponent],
+    [GreaterThan.symbol, GreaterThan],
+    [GreaterThanOrEqual.symbol, GreaterThanOrEqual],
+    [LessThan.symbol, LessThan],
+    [LessThanOrEqual.symbol, LessThanOrEqual],
+    [Equals.symbol, Equals],
+    [NotEquals.symbol, NotEquals],
+    [And.symbol, And],
+    [Or.symbol, Or],
+    [Not.symbol, Not],
+    [IfElse.symbol, IfElse],
 ]);
 
 
@@ -12722,49 +12864,23 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Score = void 0;
 /** Reports the result of evaluating a Changeset for reviewability. */
 class Score {
-    constructor(formula) {
-        this.formula = formula;
-        this.variableSubstitutions = new Map();
+    constructor(expression, result, context) {
+        this.expression = expression;
+        // Round to two decimal places: https://stackoverflow.com/a/11832950
+        this.result = Math.round((result + Number.EPSILON) * 100) / 100,
+            this.context = context;
     }
-    /**
-     * Records the error that we encountered when evaluating the formula.
-     *
-     * @param error
-     */
-    addError(error) {
-        this.error = error;
-        this.result = undefined;
-        this.category = undefined;
-    }
-    /**
-     * Records the result of evaluating the formula.
-     *
-     * @param value Score that we computed
-     * @param categories The set of possible categories to assign.
-     */
-    addValue(value, categories) {
-        this.error = undefined;
-        this.result = value;
-        this.category = categories === null || categories === void 0 ? void 0 : categories.categorize(value);
-    }
-    /**
-     * Records that we used a particular value for a variable during evaluation.
-     *
-     * @param variableName The name of the variable we substituted
-     * @param value The value we used for the variable
-     */
-    recordVariableSubstitution(variableName, value) {
-        this.variableSubstitutions.set(variableName, value);
+    get category() {
+        var _a;
+        return (_a = this.context.categories) === null || _a === void 0 ? void 0 : _a.categorize(this.result);
     }
     toString({ spacing } = { spacing: 2 }) {
-        return JSON.stringify(this, (key, value) => {
-            if (value instanceof Map) {
-                return [...value];
-            }
-            else {
-                return value;
-            }
-        }, spacing);
+        return JSON.stringify({
+            expression: this.expression,
+            result: this.result,
+            category: this.category,
+            substitutions: Object.fromEntries(this.context.cache.entries()),
+        }, undefined, spacing);
     }
 }
 exports.Score = Score;
@@ -12785,6 +12901,7 @@ const YAML = __nccwpck_require__(4083);
 const fs = __nccwpck_require__(7147);
 const path = __nccwpck_require__(1017);
 const category_configuration_1 = __nccwpck_require__(6535);
+const context_1 = __nccwpck_require__(8001);
 class SizeUp {
     /**
      * Evaluates a diff for reviewability.
@@ -12806,8 +12923,9 @@ class SizeUp {
         const changeset = new changeset_1.default({ diff, ignoredFilePatterns, testFilePatterns });
         const categories = new category_configuration_1.CategoryConfiguration(userSuppliedConfig.categories || defaultConfig.categories);
         const aliases = new Map(Object.entries(((_a = userSuppliedConfig.scoring) === null || _a === void 0 ? void 0 : _a.aliases) || defaultConfig.scoring.aliases || {}));
-        const formula = new formula_1.Formula(((_b = userSuppliedConfig.scoring) === null || _b === void 0 ? void 0 : _b.formula) || defaultConfig.scoring.formula, aliases);
-        return formula.evaluate(changeset, categories);
+        const context = new context_1.Context({ changeset, aliases, categories });
+        const formula = new formula_1.Formula(((_b = userSuppliedConfig.scoring) === null || _b === void 0 ? void 0 : _b.formula) || defaultConfig.scoring.formula);
+        return formula.evaluate(context);
     }
 }
 exports.SizeUp = SizeUp;

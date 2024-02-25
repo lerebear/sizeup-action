@@ -34,7 +34,7 @@ export async function addOrUpdateScoreThresholdExceededComment(
     config.commenting?.scoreThreshold,
     DEFAULT_SCORE_THRESHOLD
   )
-  if (score.result! <= threshold) return
+  if (score.result <= threshold) return
 
   if (
     pull.draft &&
@@ -128,7 +128,7 @@ ${score.toString()}
 
   const comment = commentTemplate
     .replaceAll('{{author}}', pull.user.login)
-    .replaceAll('{{score}}', `${score.result!}`)
+    .replaceAll('{{score}}', `${score.result}`)
     .replaceAll('{{category}}', score.category!.name)
     .replaceAll('{{threshold}}', `${threshold}`)
     .replaceAll('{{score-details}}', detailsElement)

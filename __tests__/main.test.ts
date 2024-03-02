@@ -34,7 +34,6 @@ function pullRequestEventContext(overrides = {}): object {
         head: {
           ref: 'topic'
         },
-        labels: [],
         number: 1,
         user: {
           login: 'lerebear'
@@ -51,10 +50,12 @@ describe('action', () => {
   jest.spyOn(github, 'getOctokit').mockImplementation((token: string): any => {
     if (token === 'xxx') {
       return {
+        paginate: () => [],
         rest: {
           issues: {
             getLabel: () => {},
-            addLabels: () => {}
+            addLabels: () => {},
+            listComments: () => {}
           }
         }
       }

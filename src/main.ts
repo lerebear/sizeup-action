@@ -180,6 +180,7 @@ async function applyLabel(
   config: Configuration
 ): Promise<void> {
   const octokit = github.getOctokit(core.getInput('token'))
+
   const labelPrefix = configOrDefault(
     config.labeling?.categoryLabelPrefix,
     DEFAULT_LABEL_PREFIX
@@ -188,7 +189,15 @@ async function applyLabel(
   const labelsToAdd = [newLabelName]
   const labelsToRemove = []
 
-  for (const existingLabel of pull.labels) {
+  const existingLabels = await octokit.paginate(
+    octokit.rest.issues.listLabelsOnIssue,
+    {
+      owner: pull.base.repo.owner.login,
+      repo: pull.base.repo.name,
+      issue_number: pull.number
+    }
+  )
+  for (const existingLabel of existingLabels) {
     if (existingLabel.name === newLabelName) {
       labelsToAdd.pop()
     } else if (existingLabel.name.startsWith(labelPrefix)) {

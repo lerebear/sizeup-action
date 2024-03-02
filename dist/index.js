@@ -16912,7 +16912,12 @@ async function applyLabel(pull, score, config) {
     const newLabelName = `${labelPrefix}${score.category.label.name}`;
     const labelsToAdd = [newLabelName];
     const labelsToRemove = [];
-    for (const existingLabel of pull.labels) {
+    const existingLabels = await octokit.paginate(octokit.rest.issues.listLabelsOnIssue, {
+        owner: pull.base.repo.owner.login,
+        repo: pull.base.repo.name,
+        issue_number: pull.number
+    });
+    for (const existingLabel of existingLabels) {
         if (existingLabel.name === newLabelName) {
             labelsToAdd.pop();
         }

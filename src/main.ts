@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import { DefaultArtifactClient } from '@actions/artifact'
 import { PullRequest, Label } from '@octokit/webhooks-types' // eslint-disable-line import/no-unresolved
 import { SizeUp, Score } from 'sizeup-core'
 import * as YAML from 'yaml'
@@ -50,6 +51,7 @@ export async function run(): Promise<void> {
       optInStatus,
       config
     )
+    await createScoreArtifact(score, config)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
@@ -256,4 +258,28 @@ async function applyLabel(
       core.info(`Would have removed stale category label "${labelName}`)
     }
   }
+}
+
+async function createScoreArtifact(
+  score: Score,
+  config: Configuration
+): Promise<void> {
+  if (!config.persistScoreArtifact) {
+    core.info('Skipping score artifact creation')
+    return
+  }
+
+  core.info('Creating score artifact')
+
+  const tmpDir = path.resolve(__dirname, './tmp')
+  const scoreFile = path.resolve(tmpDir, './sizeup-score/sizeup-score.csv')
+
+  fs.mkdirSync(path.dirname(scoreFile), { recursive: true })
+  fs.writeFileSync(
+    scoreFile,
+    `score,category\n${score.result},${score.category?.name || ''}`
+  )
+
+  const client = new DefaultArtifactClient()
+  await client.uploadArtifact('sizeup-score', [scoreFile], tmpDir)
 }

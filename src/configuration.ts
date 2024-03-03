@@ -51,7 +51,11 @@ export interface Configuration {
    *
    * @minItems 1
    */
-  optIns?: string[]
+  optIns?: [string, ...string[]]
+  /**
+   * Whether or not to compute a score even for users who have opted out of the workflow
+   */
+  shadowOptOuts?: boolean
   sizeup?: Configuration1
 }
 /**
@@ -63,33 +67,62 @@ export interface Configuration1 {
    *
    * @minItems 1
    */
-  categories?: {
-    /**
-     * human-friendly name of the category
-     */
-    name: string
-    /**
-     * A visual label that should be used to represent this category
-     */
-    label?: {
+  categories?: [
+    {
       /**
-       * name of the label that should be used to represent this category
+       * human-friendly name of the category
        */
       name: string
       /**
-       * describes the meaning of the label that will be used to represent this category
+       * A visual label that should be used to represent this category
        */
-      description?: string
+      label?: {
+        /**
+         * name of the label that should be used to represent this category
+         */
+        name: string
+        /**
+         * describes the meaning of the label that will be used to represent this category
+         */
+        description?: string
+        /**
+         * preferred CSS hex color label that should be used to represent this category
+         */
+        color?: string
+      }
       /**
-       * preferred CSS hex color label that should be used to represent this category
+       * inclusive upper bound on the score that a pull request must have to be assigned this category
        */
-      color?: string
-    }
-    /**
-     * inclusive upper bound on the score that a pull request must have to be assigned this category
-     */
-    lte?: number
-  }[]
+      lte?: number
+    },
+    ...{
+      /**
+       * human-friendly name of the category
+       */
+      name: string
+      /**
+       * A visual label that should be used to represent this category
+       */
+      label?: {
+        /**
+         * name of the label that should be used to represent this category
+         */
+        name: string
+        /**
+         * describes the meaning of the label that will be used to represent this category
+         */
+        description?: string
+        /**
+         * preferred CSS hex color label that should be used to represent this category
+         */
+        color?: string
+      }
+      /**
+       * inclusive upper bound on the score that a pull request must have to be assigned this category
+       */
+      lte?: number
+    }[]
+  ]
   scoring?: {
     /**
      * an expression, written in prefix-notation, that describes how to combine features to produce a score
@@ -99,6 +132,10 @@ export interface Configuration1 {
      * named expression aliases, each of which can be used as shortand in a formula
      */
     aliases?: {
+      /**
+       * This interface was referenced by `undefined`'s JSON-Schema definition
+       * via the `patternProperty` "^[\w][\w-]*$".
+       */
       [k: string]: string
     }
   }

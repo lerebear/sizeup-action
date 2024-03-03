@@ -59,6 +59,11 @@
                 "type": "string"
             }
         },
+        "shadowOptOuts": {
+            "description": "Whether or not to compute a score even for users who have opted out of the workflow",
+            "type": "boolean",
+            "default": false
+        },
         "sizeup": {
             "$ref": "https://raw.githubusercontent.com/lerebear/sizeup/main/src/config/schema.json"
         }

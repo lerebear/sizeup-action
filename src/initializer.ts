@@ -24,32 +24,39 @@ export function loadConfiguration(): Configuration {
   return YAML.parse(fs.readFileSync(configFile, 'utf8')) as Configuration
 }
 
+export enum OptInStatus {
+  In = 1, // The user has opted into the full behaviour of this workflow.
+  Out, // The user has opted out of the workflow, so it should be aborted.
+  Shadow // The user has opted out but we're running in shadow mode so we should continue silently.
+}
+
 /**
  *
  * @param pull The pull request that triggered this workflow
  * @param config The configuration for this workflow
- * @returns True if the pull request author has not opted into this workflow
- *   (meaning that we should quit early), false otherwise (meaning that we
- *   should proceed with evaluation of the pull request).
+ * @returns A status indicating how to continue running the rest of the workflow.
  */
-export function pullRequestAuthorHasNotOptedIn(
+export function getOptInStatus(
   pull: PullRequest,
   config: Configuration
-): boolean {
+): OptInStatus {
   const usersWhoHaveOptedin = config.optIns || []
-
-  if (
+  const userHasOptedOut =
     usersWhoHaveOptedin.length &&
     !usersWhoHaveOptedin.find((login: string) => login === pull.user.login)
-  ) {
+
+  if (userHasOptedOut && config.shadowOptOuts) {
+    core.info('Executing workflow silently for user who was not opted in')
+    return OptInStatus.Shadow
+  } else if (userHasOptedOut) {
     core.info(
       `Skipping evaluation because pull request author @${pull.user.login} has not opted` +
         ' into this workflow'
     )
-    return true
+    return OptInStatus.Out
+  } else {
+    return OptInStatus.In
   }
-
-  return false
 }
 
 /**

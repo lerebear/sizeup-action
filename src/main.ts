@@ -9,7 +9,8 @@ import { Configuration } from './configuration'
 import {
   configOrDefault,
   loadConfiguration,
-  pullRequestAuthorHasNotOptedIn
+  getOptInStatus,
+  OptInStatus
 } from './initializer'
 import { Git } from './git'
 import { addOrUpdateScoreThresholdExceededComment } from './commenting'
@@ -37,12 +38,18 @@ export async function run(): Promise<void> {
     await git.clone(pullRequest.base.repo.full_name, pullRequest.head.ref)
 
     const config = loadConfiguration()
-    if (pullRequestAuthorHasNotOptedIn(pullRequest, config)) return
+    const optInStatus = getOptInStatus(pullRequest, config)
+    if (optInStatus === OptInStatus.Out) return
 
     const diff = await git.diff(pullRequest.base.ref)
     const score = await evaluatePullRequest(pullRequest, diff, config)
-    await applyCategoryLabel(pullRequest, score, config)
-    await addOrUpdateScoreThresholdExceededComment(pullRequest, score, config)
+    await applyCategoryLabel(pullRequest, score, optInStatus, config)
+    await addOrUpdateScoreThresholdExceededComment(
+      pullRequest,
+      score,
+      optInStatus,
+      config
+    )
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
@@ -102,6 +109,7 @@ async function evaluatePullRequest(
 async function applyCategoryLabel(
   pull: PullRequest,
   score: Score,
+  optInStatus: OptInStatus,
   config: Configuration
 ): Promise<void> {
   if (!score.category?.label) {
@@ -114,6 +122,13 @@ async function applyCategoryLabel(
     configOrDefault(config.labeling?.excludeDraftPullRequests, false)
   ) {
     core.info('Skipping labeling of a draft pull request')
+    return
+  }
+
+  if (optInStatus === OptInStatus.Shadow) {
+    core.info(
+      'Skipping labeling because this workflow is running in shadow mode'
+    )
     return
   }
 

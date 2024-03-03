@@ -3,7 +3,7 @@ import * as github from '@actions/github'
 import { PullRequest } from '@octokit/webhooks-types' // eslint-disable-line import/no-unresolved
 import { Score } from 'sizeup-core'
 import { Configuration } from './configuration'
-import { configOrDefault } from './initializer'
+import { OptInStatus, configOrDefault } from './initializer'
 
 const DEFAULT_COMMENT_TEMPLATE = `
 👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
@@ -28,6 +28,7 @@ const COMMENT_METADATA =
 export async function addOrUpdateScoreThresholdExceededComment(
   pull: PullRequest,
   score: Score,
+  optInStatus: OptInStatus,
   config: Configuration
 ): Promise<void> {
   const threshold = configOrDefault(
@@ -41,6 +42,13 @@ export async function addOrUpdateScoreThresholdExceededComment(
     configOrDefault(config.commenting?.excludeDraftPullRequests, true)
   ) {
     core.info('Skipping commenting on a draft pull request')
+    return
+  }
+
+  if (optInStatus === OptInStatus.Shadow) {
+    core.info(
+      'Skipping commenting because this workflow is running in shadow mode'
+    )
     return
   }
 

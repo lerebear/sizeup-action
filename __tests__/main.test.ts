@@ -145,6 +145,28 @@ describe('action', () => {
     )
   })
 
+  it('skips labelling a pull request when running in shadow mode', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext()
+    })
+
+    loadConfigurationMock.mockImplementation(() => ({
+      // Mock config such that the only opted-in user is @glortho. The pull request will be created
+      // by @lerebear, who should therefore *not* be considered opted in.
+      optIns: ['glortho'],
+      shadowOptOuts: true
+    }))
+
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(infoMock).toHaveBeenCalledWith(
+      'Skipping labeling because this workflow is running in shadow mode'
+    )
+  })
+
   it('skips commenting on a draft pull request when configured to do so', async () => {
     // Mock the @actions/github context.
     Object.defineProperty(github, 'context', {
@@ -164,6 +186,29 @@ describe('action', () => {
     )
   })
 
+  it('skips commenting on a pull request when running in shadow mode', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext()
+    })
+
+    loadConfigurationMock.mockImplementation(() => ({
+      // Mock config such that the only opted-in user is @glortho. The pull request will be created
+      // by @lerebear, who should therefore *not* be considered opted in.
+      optIns: ['glortho'],
+      shadowOptOuts: true,
+      commenting: { scoreThreshold: 0 }
+    }))
+
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(infoMock).toHaveBeenCalledWith(
+      'Skipping commenting because this workflow is running in shadow mode'
+    )
+  })
+
   it('runs the workflow sucessfully when optIns configuration is present and the pull request author is in it', async () => {
     // Mock the @actions/github context.
     Object.defineProperty(github, 'context', {
@@ -172,7 +217,7 @@ describe('action', () => {
 
     loadConfigurationMock.mockImplementation(() => ({
       // Mock config such that the only opted-in user is @glortho. The pull request will be created
-      // by @lerebear, who should therefore not be considered optedpin.
+      // by @lerebear, who should therefore *not* be considered opted in.
       optIns: ['lerebear']
     }))
 

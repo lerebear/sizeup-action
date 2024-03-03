@@ -16492,13 +16492,17 @@ const COMMENT_METADATA = '<!-- data key="id" value=score-threshold-exceeded-comm
  * @param score The score the pull request received from `sizeup`
  * @param config The configuration for this workflow run
  */
-async function addOrUpdateScoreThresholdExceededComment(pull, score, config) {
+async function addOrUpdateScoreThresholdExceededComment(pull, score, optInStatus, config) {
     const threshold = (0, initializer_1.configOrDefault)(config.commenting?.scoreThreshold, DEFAULT_SCORE_THRESHOLD);
     if (score.result <= threshold)
         return;
     if (pull.draft &&
         (0, initializer_1.configOrDefault)(config.commenting?.excludeDraftPullRequests, true)) {
         core.info('Skipping commenting on a draft pull request');
+        return;
+    }
+    if (optInStatus === initializer_1.OptInStatus.Shadow) {
+        core.info('Skipping commenting because this workflow is running in shadow mode');
         return;
     }
     const comment = scoreThresholdExceededComment(pull, score, config);
@@ -16685,7 +16689,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.configOrDefault = exports.pullRequestAuthorHasNotOptedIn = exports.loadConfiguration = void 0;
+exports.configOrDefault = exports.getOptInStatus = exports.OptInStatus = exports.loadConfiguration = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
@@ -16708,25 +16712,36 @@ function loadConfiguration() {
     return YAML.parse(fs.readFileSync(configFile, 'utf8'));
 }
 exports.loadConfiguration = loadConfiguration;
+var OptInStatus;
+(function (OptInStatus) {
+    OptInStatus[OptInStatus["In"] = 1] = "In";
+    OptInStatus[OptInStatus["Out"] = 2] = "Out";
+    OptInStatus[OptInStatus["Shadow"] = 3] = "Shadow"; // The user has opted out but we're running in shadow mode so we should continue silently.
+})(OptInStatus || (exports.OptInStatus = OptInStatus = {}));
 /**
  *
  * @param pull The pull request that triggered this workflow
  * @param config The configuration for this workflow
- * @returns True if the pull request author has not opted into this workflow
- *   (meaning that we should quit early), false otherwise (meaning that we
- *   should proceed with evaluation of the pull request).
+ * @returns A status indicating how to continue running the rest of the workflow.
  */
-function pullRequestAuthorHasNotOptedIn(pull, config) {
+function getOptInStatus(pull, config) {
     const usersWhoHaveOptedin = config.optIns || [];
-    if (usersWhoHaveOptedin.length &&
-        !usersWhoHaveOptedin.find((login) => login === pull.user.login)) {
+    const userHasOptedOut = usersWhoHaveOptedin.length &&
+        !usersWhoHaveOptedin.find((login) => login === pull.user.login);
+    if (userHasOptedOut && config.shadowOptOuts) {
+        core.info('Executing workflow silently for user who was not opted in');
+        return OptInStatus.Shadow;
+    }
+    else if (userHasOptedOut) {
         core.info(`Skipping evaluation because pull request author @${pull.user.login} has not opted` +
             ' into this workflow');
-        return true;
+        return OptInStatus.Out;
     }
-    return false;
+    else {
+        return OptInStatus.In;
+    }
 }
-exports.pullRequestAuthorHasNotOptedIn = pullRequestAuthorHasNotOptedIn;
+exports.getOptInStatus = getOptInStatus;
 /**
  * If necessary, provides a default for an undefined configuration value.
  *
@@ -16798,12 +16813,13 @@ async function run() {
         const git = new git_1.Git();
         await git.clone(pullRequest.base.repo.full_name, pullRequest.head.ref);
         const config = (0, initializer_1.loadConfiguration)();
-        if ((0, initializer_1.pullRequestAuthorHasNotOptedIn)(pullRequest, config))
+        const optInStatus = (0, initializer_1.getOptInStatus)(pullRequest, config);
+        if (optInStatus === initializer_1.OptInStatus.Out)
             return;
         const diff = await git.diff(pullRequest.base.ref);
         const score = await evaluatePullRequest(pullRequest, diff, config);
-        await applyCategoryLabel(pullRequest, score, config);
-        await (0, commenting_1.addOrUpdateScoreThresholdExceededComment)(pullRequest, score, config);
+        await applyCategoryLabel(pullRequest, score, optInStatus, config);
+        await (0, commenting_1.addOrUpdateScoreThresholdExceededComment)(pullRequest, score, optInStatus, config);
     }
     catch (error) {
         if (error instanceof Error)
@@ -16848,7 +16864,7 @@ async function evaluatePullRequest(pull, diff, config) {
  * @param score The score the pull request received from `sizeup`
  * @param config The configuration for this workflow run
  */
-async function applyCategoryLabel(pull, score, config) {
+async function applyCategoryLabel(pull, score, optInStatus, config) {
     if (!score.category?.label) {
         core.info('Skipping labeling because no category label was provided');
         return;
@@ -16856,6 +16872,10 @@ async function applyCategoryLabel(pull, score, config) {
     if (pull.draft &&
         (0, initializer_1.configOrDefault)(config.labeling?.excludeDraftPullRequests, false)) {
         core.info('Skipping labeling of a draft pull request');
+        return;
+    }
+    if (optInStatus === initializer_1.OptInStatus.Shadow) {
+        core.info('Skipping labeling because this workflow is running in shadow mode');
         return;
     }
     await ensureLabelExists(pull, score, config);

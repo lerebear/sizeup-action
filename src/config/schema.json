@@ -64,6 +64,11 @@
             "type": "boolean",
             "default": false
         },
+        "persistScoreArtifact": {
+            "description": "Whether or not to create a workflow artifact that contains details about the score",
+            "type": "boolean",
+            "default": false
+        },
         "sizeup": {
             "$ref": "https://raw.githubusercontent.com/lerebear/sizeup/main/src/config/schema.json"
         }

@@ -209,6 +209,19 @@ describe('action', () => {
     )
   })
 
+  it('skips creating a score artifact by default', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext()
+    })
+
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(infoMock).toHaveBeenCalledWith('Skipping score artifact creation')
+  })
+
   it('runs the workflow sucessfully when optIns configuration is present and the pull request author is in it', async () => {
     // Mock the @actions/github context.
     Object.defineProperty(github, 'context', {

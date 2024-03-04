@@ -5,7 +5,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { Score } from 'sizeup-core'
 import { Configuration } from './configuration'
-import { OptInStatus } from './initializer'
+import { OptInStatus, configOrDefault } from './initializer'
 
 export async function createScoreArtifact(
   pull: PullRequest,
@@ -14,7 +14,17 @@ export async function createScoreArtifact(
   config: Configuration
 ): Promise<void> {
   if (!config.archiving?.persistScoreArtifact) {
-    core.info('Skipping score artifact creation')
+    core.info(
+      'Skipping score artifact creation because it has not been enabled'
+    )
+    return
+  }
+
+  if (
+    pull.draft &&
+    configOrDefault(config.archiving?.excludeDraftPullRequests, true)
+  ) {
+    core.info('Skipping score artifact creation on a draft pull request')
     return
   }
 

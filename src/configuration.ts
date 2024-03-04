@@ -16,16 +16,16 @@ export interface Configuration {
     /**
      * Whether or not to apply the category label to each assessed pull request
      */
-    applyCategoryLabels?: boolean
+    applyCategoryLabels?: boolean;
     /**
      * Whether or not to skip applying the category label to a draft pull request
      */
-    excludeDraftPullRequests?: boolean
+    excludeDraftPullRequests?: boolean;
     /**
      * The prefix to add to each category label that we apply
      */
-    categoryLabelPrefix?: string
-  }
+    categoryLabelPrefix?: string;
+  };
   /**
    * Configuration that controls how we add comments to assessed pull requests
    */
@@ -33,35 +33,44 @@ export interface Configuration {
     /**
      * Whether or not to add a comment to each assessed pull request that exceeds the configured score threshold
      */
-    addCommentWhenScoreThresholdHasBeenExceeded?: boolean
+    addCommentWhenScoreThresholdHasBeenExceeded?: boolean;
     /**
      * Whether or not to skip commenting on a draft pull request that exceeds the configured score threshold
      */
-    excludeDraftPullRequests?: boolean
+    excludeDraftPullRequests?: boolean;
     /**
      * The score above which this tool will post a comment on the pull request.
      */
-    scoreThreshold?: number
+    scoreThreshold?: number;
     /**
      * The template for the comment that should be added to each pull request that exceeds the configured score threshold
      */
-    commentTemplate?: string
-  }
+    commentTemplate?: string;
+  };
   /**
    * A list of GitHub handles for users or teams that have opted into this workflow
    *
    * @minItems 1
    */
-  optIns?: [string, ...string[]]
+  optIns?: [string, ...string[]];
   /**
    * Whether or not to compute a score even for users who have opted out of the workflow
    */
-  shadowOptOuts?: boolean
+  shadowOptOuts?: boolean;
   /**
-   * Whether or not to create a workflow artifact that contains details about the score
+   * Configuration options for persisting the output of this workflow
    */
-  persistScoreArtifact?: boolean
-  sizeup?: Configuration1
+  archiving?: {
+    /**
+     * Whether or not to create a workflow artifact that contains details about the score
+     */
+    persistScoreArtifact?: boolean;
+    /**
+     * Retention period (in days) for the artifact created by this workflow. The actual retention period used may be shorter than this in the presence of an overriding repository- or organization- level retention period setting.
+     */
+    artifactRetention?: number;
+  };
+  sizeup?: Configuration1;
 }
 /**
  * YAML configuration accepted by sizeup
@@ -77,7 +86,7 @@ export interface Configuration1 {
       /**
        * human-friendly name of the category
        */
-      name: string
+      name: string;
       /**
        * A visual label that should be used to represent this category
        */
@@ -85,26 +94,26 @@ export interface Configuration1 {
         /**
          * name of the label that should be used to represent this category
          */
-        name: string
+        name: string;
         /**
          * describes the meaning of the label that will be used to represent this category
          */
-        description?: string
+        description?: string;
         /**
          * preferred CSS hex color label that should be used to represent this category
          */
-        color?: string
-      }
+        color?: string;
+      };
       /**
        * inclusive upper bound on the score that a pull request must have to be assigned this category
        */
-      lte?: number
+      lte?: number;
     },
     ...{
       /**
        * human-friendly name of the category
        */
-      name: string
+      name: string;
       /**
        * A visual label that should be used to represent this category
        */
@@ -112,27 +121,27 @@ export interface Configuration1 {
         /**
          * name of the label that should be used to represent this category
          */
-        name: string
+        name: string;
         /**
          * describes the meaning of the label that will be used to represent this category
          */
-        description?: string
+        description?: string;
         /**
          * preferred CSS hex color label that should be used to represent this category
          */
-        color?: string
-      }
+        color?: string;
+      };
       /**
        * inclusive upper bound on the score that a pull request must have to be assigned this category
        */
-      lte?: number
+      lte?: number;
     }[]
-  ]
+  ];
   scoring?: {
     /**
      * an expression, written in prefix-notation, that describes how to combine features to produce a score
      */
-    formula: string
+    formula: string;
     /**
      * named expression aliases, each of which can be used as shortand in a formula
      */
@@ -141,15 +150,15 @@ export interface Configuration1 {
        * This interface was referenced by `undefined`'s JSON-Schema definition
        * via the `patternProperty` "^[\w][\w-]*$".
        */
-      [k: string]: string
-    }
-  }
+      [k: string]: string;
+    };
+  };
   /**
    * glob expressions matching file patterns that should be considered as tests during the scoring process
    */
-  testFilePatterns?: string[]
+  testFilePatterns?: string[];
   /**
    * glob expressions matching file patterns that are ignored in the scoring process
    */
-  ignoredFilePatterns?: string[]
+  ignoredFilePatterns?: string[];
 }

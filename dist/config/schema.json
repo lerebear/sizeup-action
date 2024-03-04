@@ -64,10 +64,20 @@
             "type": "boolean",
             "default": false
         },
-        "persistScoreArtifact": {
-            "description": "Whether or not to create a workflow artifact that contains details about the score",
-            "type": "boolean",
-            "default": false
+        "archiving": {
+            "description": "Configuration options for persisting the output of this workflow",
+            "type": "object",
+            "properties": {
+                "persistScoreArtifact": {
+                    "description": "Whether or not to create a workflow artifact that contains details about the score",
+                    "type": "boolean",
+                    "default": false
+                },
+                "artifactRetention": {
+                    "description": "Retention period (in days) for the artifact created by this workflow. The actual retention period used may be shorter than this in the presence of an overriding repository- or organization- level retention period setting.",
+                    "type": "number"
+                }
+            }
         },
         "sizeup": {
             "$ref": "https://raw.githubusercontent.com/lerebear/sizeup/main/src/config/schema.json"

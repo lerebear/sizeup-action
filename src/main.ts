@@ -264,7 +264,7 @@ async function createScoreArtifact(
   score: Score,
   config: Configuration
 ): Promise<void> {
-  if (!config.persistScoreArtifact) {
+  if (!config.archiving?.persistScoreArtifact) {
     core.info('Skipping score artifact creation')
     return
   }
@@ -281,5 +281,7 @@ async function createScoreArtifact(
   )
 
   const client = new DefaultArtifactClient()
-  await client.uploadArtifact('sizeup-score', [scoreFile], tmpDir)
+  await client.uploadArtifact('sizeup-score', [scoreFile], tmpDir, {
+    retentionDays: config.archiving?.artifactRetention
+  })
 }

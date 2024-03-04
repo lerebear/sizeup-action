@@ -48,7 +48,8 @@ function scoreFileContents(
   optInStatus: OptInStatus
 ): string {
   const fields = [
-    ['pull-request-number', `${pull.number}`],
+    ['pull.number', `${pull.number}`],
+    ['pull.draft', `${pull.draft}`],
     ['opted-in', `${optInStatus === OptInStatus.In}`],
     ['score', `${score.result}`],
     ['category', score.category?.name || ''],

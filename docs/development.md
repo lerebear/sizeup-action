@@ -14,4 +14,8 @@ The result of that command (changes to the [`dist`](./dist) directory and other 
 
 ## Regenerating the Typescript interface for the configuration schema
 
-Follow the same [procedure](https://github.com/lerebear/sizeup-core#regenerating-the-typescript-interface-for-the-configuration-schema) outlined for this process in the `sizeup-core` repository.
+The [configuration JSON schema](../src/config/schema.json) acts as the source of truth for the configuration file format that this workflow accepts: each change to configuration should begin with a change to that schema. Once that change has been made, we should regenerate the corresponding [`Configuration`](../src/configuration.ts) interface in Typescript using the `generate:config` script:
+
+```sh
+npm run generate:config
+```

@@ -69,6 +69,10 @@ export interface Configuration {
      * Retention period (in days) for the artifact created by this workflow. The actual retention period used may be shorter than this in the presence of an overriding repository- or organization- level retention period setting.
      */
     artifactRetention?: number;
+    /**
+     * Whether or not to skip creating an artifact for workflow runs on a draft pull request
+     */
+    excludeDraftPullRequests?: boolean;
   };
   sizeup?: Configuration1;
 }

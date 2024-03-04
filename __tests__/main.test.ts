@@ -209,7 +209,7 @@ describe('action', () => {
     )
   })
 
-  it('skips creating a score artifact by default', async () => {
+  it('skips creating a score artifact when that feature is not enabled', async () => {
     // Mock the @actions/github context.
     Object.defineProperty(github, 'context', {
       value: pullRequestEventContext()
@@ -219,7 +219,28 @@ describe('action', () => {
 
     expect(runMock).toHaveReturned()
     expect(setFailedMock).not.toHaveBeenCalled()
-    expect(infoMock).toHaveBeenCalledWith('Skipping score artifact creation')
+    expect(infoMock).toHaveBeenCalledWith(
+      'Skipping score artifact creation because it has not been enabled'
+    )
+  })
+
+  it('skips creating a score artifact on draft pull requests by default', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext({ draft: true })
+    })
+
+    loadConfigurationMock.mockImplementation(() => ({
+      archiving: { persistScoreArtifact: true }
+    }))
+
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(infoMock).toHaveBeenCalledWith(
+      'Skipping score artifact creation on a draft pull request'
+    )
   })
 
   it('runs the workflow sucessfully when optIns configuration is present and the pull request author is in it', async () => {

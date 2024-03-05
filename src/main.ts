@@ -14,7 +14,7 @@ import {
 } from './initializer'
 import { Git } from './git'
 import { addOrUpdateScoreThresholdExceededComment } from './commenting'
-import { createScoreArtifact } from './archiver'
+import { createScoreArtifact } from './artifacts'
 
 const DEFAULT_LABEL_PREFIX = 'sizeup/'
 

@@ -58,21 +58,26 @@ export interface Configuration {
    */
   shadowOptOuts?: boolean;
   /**
-   * Configuration options for persisting the output of this workflow
+   * Configuration options for persisting the output of this workflow.
    */
-  archiving?: {
+  artifacts?: {
     /**
-     * Whether or not to create a workflow artifact that contains details about the score
+     * Configuration for the workflow artifact that contains details about the score
      */
-    persistScoreArtifact?: boolean;
-    /**
-     * Retention period (in days) for the artifact created by this workflow. The actual retention period used may be shorter than this in the presence of an overriding repository- or organization- level retention period setting.
-     */
-    artifactRetention?: number;
-    /**
-     * Whether or not to skip creating an artifact for workflow runs on a draft pull request
-     */
-    excludeDraftPullRequests?: boolean;
+    score: {
+      /**
+       * The file format to use for the score artifact
+       */
+      format: "csv" | "json";
+      /**
+       * Retention period (in days) for the score artifact. The actual retention period used may be shorter than this in the presence of an overriding repository- or organization- level retention period setting.
+       */
+      retention?: number;
+      /**
+       * Whether or not to skip creating the artifact for workflow runs on a draft pull request
+       */
+      excludeDraftPullRequests?: boolean;
+    };
   };
   sizeup?: Configuration1;
 }

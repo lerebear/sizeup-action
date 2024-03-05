@@ -231,7 +231,11 @@ describe('action', () => {
     })
 
     loadConfigurationMock.mockImplementation(() => ({
-      archiving: { persistScoreArtifact: true }
+      artifacts: {
+        score: {
+          format: 'csv'
+        }
+      }
     }))
 
     await main.run()

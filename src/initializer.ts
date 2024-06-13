@@ -43,7 +43,9 @@ export function getOptInStatus(
   const usersWhoHaveOptedin = config.optIns || []
   const userHasOptedOut =
     usersWhoHaveOptedin.length &&
-    !usersWhoHaveOptedin.find((login: string) => login === pull.user.login)
+    !usersWhoHaveOptedin.find(
+      (login: string) => login.toLowerCase() === pull.user.login.toLowerCase()
+    )
 
   if (userHasOptedOut && config.shadowOptOuts) {
     core.info('Executing workflow silently for user who was not opted in')

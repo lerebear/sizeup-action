@@ -267,6 +267,24 @@ describe('action', () => {
     expect(setOutputMock).toHaveBeenNthCalledWith(2, 'category', 'extra small')
   })
 
+  it('runs the workflow sucessfully regardless of casing of optIns and pull request author login', async () => {
+    // Mock the @actions/github context.
+    Object.defineProperty(github, 'context', {
+      value: pullRequestEventContext({ user: { login: 'LeReBeAr' } })
+    })
+
+    loadConfigurationMock.mockImplementation(() => ({
+      optIns: ['lerebear']
+    }))
+
+    await main.run()
+
+    expect(runMock).toHaveReturned()
+    expect(setFailedMock).not.toHaveBeenCalled()
+    expect(setOutputMock).toHaveBeenNthCalledWith(1, 'score', 1)
+    expect(setOutputMock).toHaveBeenNthCalledWith(2, 'category', 'extra small')
+  })
+
   it('skips the workflow entirely when the pull request author has not opted into it', async () => {
     // Mock the @actions/github context.
     Object.defineProperty(github, 'context', {

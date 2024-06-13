@@ -160,3 +160,7 @@ The default configuration that is used when no configuration file is provided ca
 The full specification for the configuration file, which includes options that are not specified in the example above or in the default configuration, is provided by the JSON schema at [`src/config/schema.json`](./src/config/schema.json).
 
 For details about what configuration can be provided under the `sizeup` key, please see the [`sizeup-core` library's configuration guide](https://github.com/lerebear/sizeup-core#configuration).
+
+## Development
+
+For notes on how to develop this library, please see [these docs](https://github.com/lerebear/sizeup-action/blob/main/docs/development.md).

@@ -9,8 +9,10 @@
 import * as core from '@actions/core'
 import * as main from '../src/main'
 import * as initializer from '../src/initializer'
-import { Git } from '../src/git'
+import { SizeUp, Score } from 'sizeup-core'
 import * as github from '@actions/github'
+import { Context } from 'sizeup-core/dist/context'
+import { CategoryConfiguration } from 'sizeup-core/dist/category-configuration'
 
 function pullRequestEventContext(overrides = {}): object {
   return {
@@ -80,17 +82,21 @@ describe('action', () => {
   // Shallow clone original @actions/github context
   const originalContext = { ...github.context }
 
-  // Mock cloning the repo
-  jest.spyOn(Git.prototype, 'clone').mockImplementation(async () => {})
-
   // Mock the diff that we use for evaluation.
-  jest
-    .spyOn(Git.prototype, 'diff')
-    .mockImplementation(async () =>
-      Promise.resolve(
-        '--- README.md	2023-10-16 16:35:38\n+++ README-AGAIN.md	2023-10-16 16:36:07\n@@ -0,0 +1 @@\n+# Hello, World!'
+  jest.spyOn(SizeUp, 'evaluate').mockImplementation(async () =>
+    Promise.resolve(
+      new Score(
+        '',
+        1,
+        new Context({
+          categories: new CategoryConfiguration([
+            { name: 'extra small', label: { name: 'xs' }, lte: 10 },
+            { name: 'large', label: { name: 'l' } }
+          ])
+        })
       )
     )
+  )
 
   // Mock core.getInput() such that we verify that we retrieve the auth token
   // from the right input variable.

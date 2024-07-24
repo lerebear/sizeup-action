@@ -12,7 +12,6 @@ import {
   getOptInStatus,
   OptInStatus
 } from './initializer'
-import { Git } from './git'
 import { addOrUpdateScoreThresholdExceededComment } from './commenting'
 import { createScoreArtifact } from './artifacts'
 
@@ -35,15 +34,12 @@ export async function run(): Promise<void> {
 
     const pullRequest = github.context.payload.pull_request as PullRequest
 
-    const git = new Git()
-    await git.clone(pullRequest.base.repo.full_name, pullRequest.head.ref)
-
     const config = loadConfiguration()
     const optInStatus = getOptInStatus(pullRequest, config)
     if (optInStatus === OptInStatus.Out) return
 
-    const diff = await git.diff(pullRequest.base.ref)
-    const score = await evaluatePullRequest(pullRequest, diff, config)
+    const score = await evaluatePullRequest(pullRequest, config)
+
     await applyCategoryLabel(pullRequest, score, optInStatus, config)
     await addOrUpdateScoreThresholdExceededComment(
       pullRequest,
@@ -69,7 +65,6 @@ export async function run(): Promise<void> {
  */
 async function evaluatePullRequest(
   pull: PullRequest,
-  diff: string,
   config: Configuration
 ): Promise<Score> {
   const pullRequestNickname = `${pull.base.repo.full_name}#${pull.number}`
@@ -82,20 +77,34 @@ async function evaluatePullRequest(
     fs.writeFileSync(sizeupConfigFile, YAML.stringify(config.sizeup))
   }
 
-  const score = SizeUp.evaluate(diff, sizeupConfigFile)
+  const score = await SizeUp.evaluate(
+    {
+      repo: pull.base.repo.full_name,
+      headRef: pull.head.ref,
+      baseRef: pull.base.ref,
+      diffOptions: core.getInput('git-diff-options').split(/\s+/),
+      token: core.getInput('token'),
+      cloneDirectory: '.'
+    },
+    sizeupConfigFile
+  )
 
   if (sizeupConfigFile) {
     fs.rmSync(sizeupConfigFile, { force: true, recursive: true })
   }
 
+  const categoryDescription = score.category ? `(${score.category.name})` : ''
+
   core.info(
-    `Pull request ${pullRequestNickname} received a score of ${score.result} (${
-      score.category!.name
-    })`
+    `Pull request ${pullRequestNickname} received a score of ${score.result} ${categoryDescription}`.trimEnd()
   )
+
   core.info(`The score was computed as follows:\n${score.toString()}`)
   core.setOutput('score', score.result)
-  core.setOutput('category', score.category!.name)
+
+  if (score.category) {
+    core.setOutput('category', score.category?.name)
+  }
 
   return score
 }

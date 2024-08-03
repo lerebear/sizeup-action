@@ -34,6 +34,12 @@ export async function run(): Promise<void> {
 
     const pullRequest = github.context.payload.pull_request as PullRequest
 
+    await SizeUp.clone(
+      core.getInput('token'),
+      pullRequest.base.repo.full_name,
+      pullRequest.head.ref
+    )
+
     const config = loadConfiguration()
     const optInStatus = getOptInStatus(pullRequest, config)
     if (optInStatus === OptInStatus.Out) return
@@ -70,27 +76,23 @@ async function evaluatePullRequest(
   const pullRequestNickname = `${pull.base.repo.full_name}#${pull.number}`
   core.info(`Evaluating pull request ${pullRequestNickname}`)
 
-  let sizeupConfigFile = undefined
+  let sizeupConfigPath = undefined
   if (config.sizeup) {
-    sizeupConfigFile = path.resolve(__dirname, './tmp/sizeup.yaml')
-    fs.mkdirSync(path.dirname(sizeupConfigFile))
-    fs.writeFileSync(sizeupConfigFile, YAML.stringify(config.sizeup))
+    sizeupConfigPath = path.resolve(__dirname, './tmp/sizeup.yaml')
+    fs.mkdirSync(path.dirname(sizeupConfigPath))
+    fs.writeFileSync(sizeupConfigPath, YAML.stringify(config.sizeup))
   }
 
-  const score = await SizeUp.evaluate(
-    {
-      repo: pull.base.repo.full_name,
-      headRef: pull.head.ref,
-      baseRef: pull.base.ref,
-      diffOptions: core.getInput('git-diff-options').split(/\s+/),
-      token: core.getInput('token'),
-      cloneDirectory: '.'
-    },
-    sizeupConfigFile
+  const diff = await SizeUp.diff(
+    core.getInput('token'),
+    pull.base.ref,
+    core.getInput('git-diff-options').split(/\s+/)
   )
 
-  if (sizeupConfigFile) {
-    fs.rmSync(sizeupConfigFile, { force: true, recursive: true })
+  const score = await SizeUp.evaluate(diff, sizeupConfigPath)
+
+  if (sizeupConfigPath) {
+    fs.rmSync(sizeupConfigPath, { force: true, recursive: true })
   }
 
   const categoryDescription = score.category ? `(${score.category.name})` : ''

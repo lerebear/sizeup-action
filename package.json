@@ -70,7 +70,7 @@
     "@actions/github": "^5.1.1",
     "@octokit/webhooks": "^12.0.3",
     "simple-git": "^3.21.0",
-    "sizeup-core": "^0.5.6",
+    "sizeup-core": "^0.5.7",
     "yaml": "^2.3.2"
   },
   "devDependencies": {

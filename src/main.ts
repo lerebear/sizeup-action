@@ -86,7 +86,7 @@ async function evaluatePullRequest(
   const diff = await SizeUp.diff(
     core.getInput('token'),
     pull.base.ref,
-    core.getInput('git-diff-options').split(/\s+/)
+    core.getInput('git-diff-options').split(/\s+/).filter(Boolean)
   )
 
   const score = await SizeUp.evaluate(diff, sizeupConfigPath)

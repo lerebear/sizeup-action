@@ -39,7 +39,7 @@ jobs:
         #
         # For more details please see:
         # https://github.com/lerebear/sizeup-action/blob/main/README.md#versioning
-        uses: lerebear/sizeup-action@v0.4.2
+        uses: lerebear/sizeup-action@v0.8.9
         id: sizeup-action
 
         with:
@@ -59,7 +59,7 @@ jobs:
           # Defaults to "--ignore-space-change", which ignores lines of the
           # diff in which the only change is to the amount of whitespace on the
           # line.
-          git-diff-options: ""
+          git-diff-options: "--ignore-space-change"
 
           # Path to a YAML configuration file for this workflow that is stored
           # in this repository.

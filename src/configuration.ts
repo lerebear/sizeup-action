@@ -48,7 +48,7 @@ export interface Configuration {
     commentTemplate?: string;
   };
   /**
-   * A list of GitHub handles for users or teams that have opted into this workflow
+   * A list of GitHub handles for pull request authors that have opted into this workflow. If this configuration key is omitted, then the workflow runs for pull requests opened by all authors.
    *
    * @minItems 1
    */

@@ -113,7 +113,7 @@ commenting:
   commentTemplate: |
     👋 @{{author}} this pull request exceeds the configured reviewability score threshold of {{threshold}}. Your actual score was {{score}}.
 
-# List of pull request authors for whom we should run this workflow. When this configuration key is omitted, the workflow runs for all pull request authors.
+# List of pull request authors for whom we should run this workflow. When this configuration key is omitted, the workflow runs for pull requests opened by all authors.
 optIns:
   - lerebear
   - glortho

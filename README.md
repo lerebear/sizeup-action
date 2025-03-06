@@ -164,3 +164,7 @@ For details about what configuration can be provided under the `sizeup` key, ple
 ## Development
 
 For notes on how to develop this library, please see [these docs](https://github.com/lerebear/sizeup-action/blob/main/docs/development.md).
+
+## Acknowledgements
+
+This tool was developed in collaboration with @glortho as a successor to https://github.com/glortho/pr-size-helper-action 🙌.

@@ -25,7 +25,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
   pull-requests: write
 
 jobs:
@@ -39,8 +38,7 @@ jobs:
         #
         # For more details please see:
         # https://github.com/lerebear/sizeup-action/blob/main/README.md#versioning
-        uses: lerebear/sizeup-action@v0.8.9
-        id: sizeup-action
+        uses: lerebear/sizeup-action@v0.8.11
 
         with:
           # A GitHub API token capable of reading pull requests from this
@@ -66,10 +64,10 @@ jobs:
           #
           # This input defaults to "", which instructs the workflow to use the
           # built-in default configuration.
-          configuration-file-path: ".github/workflows/sizeup/config.yaml"
+          configuration-file-path: ".github/sizeup.yaml"
 ```
 
-This will use [`sizeup`](https://github.com/lerebear/sizeup-core) to estimate the reviewability of any pull request opened on your repository using a YAML configuration file found at `.github/workflows/sizeup/config.yaml`. The format of the configuration file is described below.
+This will use [`sizeup`](https://github.com/lerebear/sizeup-core) to estimate the reviewability of any pull request opened on your repository using a YAML configuration file found at `.github/sizeup.yaml`. The format of the configuration file is described below.
 
 Please note that the workflow configuration above does not use [`actions/checkout`](https://github.com/actions/checkout). This is because `actions/checkout` does not provide enough options to make a customized `git diff` command maximally efficient. Instead, this Action will perform its own clone, fetch, and checkout operations using the provided `token`.
 
@@ -79,7 +77,7 @@ This Action follows [semantic versioning conventions](https://semver.org), but i
 
 ## Configuration
 
-This Action can be configured by specifying the `configuration-file` input. The value of that input should be the path to a YAML file that contains configuration for this Action and the underlying `sizeup` library.
+This Action can be configured by specifying the `configuration-file-path` input. The value of that input should be the path to a YAML file that contains configuration for this Action and the underlying `sizeup` library.
 
 An example configuration file looks like this:
 

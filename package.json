@@ -71,7 +71,7 @@
     "@octokit/webhooks": "^12.0.3",
     "simple-git": "^3.21.0",
     "sizeup-core": "^0.5.9",
-    "yaml": "^2.3.2"
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.4",
